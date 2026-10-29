@@ -1,224 +1,101 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+
+const BLUE = "currentColor";
+const RED = "#ce283c";
+
+/* Pictos dessinés sur mesure pour ISTIN MUTUELLE : trait bleu (currentColor) + un détail rouge animé au survol. */
+function IconFrame({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+      className="text-[#0b63ab]"
+    >
+      {children}
+    </svg>
+  );
+}
+
+/** Écoute : bulle de message et ondes sonores */
+function IconEcoute() {
+  return (
+    <IconFrame>
+      <g stroke={BLUE} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 8h14a7 7 0 0 1 7 7v6a7 7 0 0 1-7 7H19l-7.5 6.5V28A7 7 0 0 1 4 21v-6a7 7 0 0 1 7-7z" />
+        <path d="M11.5 15h13M11.5 21h8" strokeWidth="2" />
+      </g>
+      <g className="about-icon-accent about-icon-waves" stroke={RED} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M35.6 14.6a6.2 6.2 0 0 1 0 8.8" />
+        <path d="M40 11a11.4 11.4 0 0 1 0 16" />
+      </g>
+    </IconFrame>
+  );
+}
+
+/** Entraide : une main qui offre un cœur */
+function IconEntraide() {
+  return (
+    <IconFrame>
+      <g stroke={BLUE} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 29h6v12H4z" />
+        <path d="M10 33.2h12.5a3.4 3.4 0 0 1 0 6.8H10" />
+        <path d="M20 33.2l9.6-6.2a3 3 0 0 1 3.4 4.9L25 37.6" />
+      </g>
+      <g className="about-icon-accent about-icon-heart" stroke={RED} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M24.5 22.5 17 15.2a4.9 4.9 0 0 1 6.9-6.9l.6.6.6-.6a4.9 4.9 0 0 1 6.9 6.9z" />
+      </g>
+    </IconFrame>
+  );
+}
+
+/** Clarté : un document, une ligne mise en valeur et une loupe */
+function IconClarte() {
+  return (
+    <IconFrame>
+      <g stroke={BLUE} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 6h13l8 8v8" />
+        <path d="M9 6a2 2 0 0 0-2 2v30a2 2 0 0 0 2 2h9" />
+        <path d="M22 6v8h8" />
+        <path d="M12.5 21h9M12.5 33h4" />
+        <circle cx="31" cy="32" r="6.5" />
+        <path d="M35.8 36.8 42 43" />
+      </g>
+      <g className="about-icon-accent about-icon-line" stroke={RED} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12.5 27h11" />
+      </g>
+    </IconFrame>
+  );
+}
+
+/** Participation : une communauté, une personne mise en avant */
+function IconParticipation() {
+  return (
+    <IconFrame>
+      <g stroke={BLUE} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="7.5" cy="24" r="3.3" />
+        <path d="M2.5 38.5c0-3.8 2.2-6.5 5-6.5s5 2.7 5 6.5" />
+        <circle cx="40.5" cy="24" r="3.3" />
+        <path d="M35.5 38.5c0-3.8 2.2-6.5 5-6.5s5 2.7 5 6.5" />
+      </g>
+      <g className="about-icon-accent about-icon-hand" stroke={RED} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="24" cy="17" r="5.2" />
+        <path d="M15 40c0-6.5 4-11 9-11s9 4.5 9 11" />
+      </g>
+    </IconFrame>
+  );
+}
 
 const cards = [
-  {
-    title: "Écoute",
-    desc: "Un espace pour s’informer et prendre contact",
-    icon: (
-      <svg
-        width="30"
-        height="30"
-        viewBox="0 0 48 48"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-        className="text-[#0b63ab]"
-      >
-        {/* Bulle de dialogue */}
-        <path
-          d="M12 14c0-3.3 3.6-6 8-6h8c4.4 0 8 2.7 8 6v8c0 3.3-3.6 6-8 6h-3.2L18 36v-6.2C14.4 29 12 26.6 12 22v-8z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {/* Ondes sonores — accent rouge */}
-        <path
-          className="about-icon-accent about-icon-waves"
-          d="M36 16c1.6 1.4 2.6 3.4 2.6 5.6S37.6 25.8 36 27.2"
-          stroke="#ce283c"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          className="about-icon-accent about-icon-waves"
-          d="M39.5 13c2.4 2.1 3.9 5.1 3.9 8.6s-1.5 6.5-3.9 8.6"
-          stroke="#ce283c"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          className="about-icon-accent about-icon-waves"
-          d="M42.8 10c3.2 2.8 5.2 6.8 5.2 11.6s-2 8.8-5.2 11.6"
-          stroke="#ce283c"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Entraide",
-    desc: "Des initiatives au service des étudiants",
-    icon: (
-      <svg
-        width="30"
-        height="30"
-        viewBox="0 0 48 48"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-        className="text-[#0b63ab]"
-      >
-        {/* Mains qui se rejoignent */}
-        <path
-          d="M10 28c2-4 6-7 10-7 2.5 0 4.5 1 6 2.5"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M38 28c-2-4-6-7-10-7-2.5 0-4.5 1-6 2.5"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M14 30c1.5 3 4.5 5 8 5h4c3.5 0 6.5-2 8-5"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M18 22c0-2 1.5-3.5 3.5-3.5S25 20 25 22"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M30 22c0-2-1.5-3.5-3.5-3.5S23 20 23 22"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        {/* Cœur rouge */}
-        <path
-          className="about-icon-accent about-icon-heart"
-          d="M24 12.5c1.2-2.2 4-2.8 5.6-1.2 1.4 1.4 1.3 3.6-.2 5L24 21l-5.4-4.7c-1.5-1.4-1.6-3.6-.2-5 1.6-1.6 4.4-1 5.6 1.2z"
-          stroke="#ce283c"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Clarté",
-    desc: "Des informations faciles à retrouver",
-    icon: (
-      <svg
-        width="30"
-        height="30"
-        viewBox="0 0 48 48"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-        className="text-[#0b63ab]"
-      >
-        {/* Feuille */}
-        <path
-          d="M12 8h16l8 8v22a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M28 8v8h8"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {/* Lignes de texte */}
-        <path d="M15 22h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        {/* Ligne mise en valeur — rouge */}
-        <path
-          className="about-icon-accent about-icon-line"
-          d="M15 27h12"
-          stroke="#ce283c"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path d="M15 32h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        {/* Loupe */}
-        <circle
-          cx="32"
-          cy="30"
-          r="6"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
-        <path
-          d="M36.5 34.5 42 40"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Participation",
-    desc: "Des services conçus pour la communauté",
-    icon: (
-      <svg
-        width="30"
-        height="30"
-        viewBox="0 0 48 48"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-        className="text-[#0b63ab]"
-      >
-        {/* Silhouette gauche */}
-        <circle cx="12" cy="16" r="4" stroke="currentColor" strokeWidth="2" />
-        <path
-          d="M6 34c0-4.5 2.7-8 6-8s6 3.5 6 8"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        {/* Silhouette droite */}
-        <circle cx="36" cy="16" r="4" stroke="currentColor" strokeWidth="2" />
-        <path
-          d="M30 34c0-4.5 2.7-8 6-8s6 3.5 6 8"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        {/* Silhouette centre (plus grande) */}
-        <circle cx="24" cy="14" r="5" stroke="currentColor" strokeWidth="2" />
-        <path
-          d="M16 36c0-5 3.6-9 8-9s8 4 8 9"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        {/* Bras + main levée — accent rouge */}
-        <path
-          className="about-icon-accent about-icon-hand"
-          d="M28 22c1.5-1 3-3.5 3-6.5V10"
-          stroke="#ce283c"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          className="about-icon-accent about-icon-hand"
-          d="M29.5 10c0-1.2.9-2 2-2s2 .8 2 2-.9 2-2 2"
-          stroke="#ce283c"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
+  { title: "Écoute", desc: "Un espace pour s’informer et prendre contact", icon: <IconEcoute /> },
+  { title: "Entraide", desc: "Des initiatives au service des étudiants", icon: <IconEntraide /> },
+  { title: "Clarté", desc: "Des informations faciles à retrouver", icon: <IconClarte /> },
+  { title: "Participation", desc: "Des services conçus pour la communauté", icon: <IconParticipation /> },
 ] as const;
 
 export function AboutTeaser() {

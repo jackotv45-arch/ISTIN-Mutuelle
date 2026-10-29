@@ -507,6 +507,7 @@ p { overflow-wrap: break-word; }
   .about-value-card:hover .about-icon-heart,
   .about-value-card:focus-visible .about-icon-heart {
     animation: about-heart-beat 400ms ease-in-out infinite;
+    transform-box: fill-box;
     transform-origin: center;
   }
   .about-value-card:hover .about-icon-line,
@@ -524,7 +525,7 @@ p { overflow-wrap: break-word; }
 }
 @keyframes about-heart-beat {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  50% { transform: scale(1.12); }
 }
 @keyframes about-line-glow {
   from { opacity: 0.65; }
@@ -532,7 +533,7 @@ p { overflow-wrap: break-word; }
 }
 @keyframes about-hand-raise {
   from { transform: translateY(0); }
-  to { transform: translateY(-1.5px); }
+  to { transform: translateY(-2px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .about-value-card {
