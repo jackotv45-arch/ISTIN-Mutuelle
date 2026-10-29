@@ -42,14 +42,24 @@
   --font-heading: var(--font-heading);
 }
 
-html { scroll-behavior: smooth; font-size: 16px; }
+html {
+  /* Pas de scroll-behavior: smooth global : ça fait défiler toute la page
+     à chaque navigation Next.js et donne l’impression d’atterrir sur le footer. */
+  font-size: 16px;
+}
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+/* Ancres in-page uniquement */
+html:has(:target) {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has(:target) { scroll-behavior: auto; }
 }
 body {
   background: var(--background);

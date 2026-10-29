@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Montserrat } from "next/font/google";
 import { PlatformProvider } from "@/lib/platform-store";
 import { MotionEffects } from "@/components/ui/MotionEffects";
 import { PwaRegister } from "@/components/ui/PwaRegister";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -54,6 +56,9 @@ export default function RootLayout({
     <html lang="fr" className={montserrat.variable}>
       <body className="min-h-full flex flex-col bg-white text-[#212529] font-sans">
         <PlatformProvider>
+          <Suspense fallback={null}>
+            <ScrollToTop />
+          </Suspense>
           <MotionEffects />
           <PwaRegister />
           {children}
