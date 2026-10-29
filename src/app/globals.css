@@ -496,3 +496,50 @@ p { overflow-wrap: break-word; }
   .card-lift:hover, .btn:hover { transform: none; }
   .card-lift:hover img { transform: none; }
 }
+
+
+/* AboutTeaser — icônes valeurs (accents animés au survol / focus) */
+@media (prefers-reduced-motion: no-preference) {
+  .about-value-card:hover .about-icon-waves,
+  .about-value-card:focus-visible .about-icon-waves {
+    animation: about-wave-pulse 400ms ease-in-out infinite alternate;
+  }
+  .about-value-card:hover .about-icon-heart,
+  .about-value-card:focus-visible .about-icon-heart {
+    animation: about-heart-beat 400ms ease-in-out infinite;
+    transform-origin: center;
+  }
+  .about-value-card:hover .about-icon-line,
+  .about-value-card:focus-visible .about-icon-line {
+    animation: about-line-glow 350ms ease-in-out infinite alternate;
+  }
+  .about-value-card:hover .about-icon-hand,
+  .about-value-card:focus-visible .about-icon-hand {
+    animation: about-hand-raise 350ms ease-in-out infinite alternate;
+  }
+}
+@keyframes about-wave-pulse {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+@keyframes about-heart-beat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+@keyframes about-line-glow {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
+@keyframes about-hand-raise {
+  from { transform: translateY(0); }
+  to { transform: translateY(-1.5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .about-value-card {
+    transition: none !important;
+  }
+  .about-value-card:hover,
+  .about-value-card:focus-visible {
+    transform: none !important;
+  }
+}
