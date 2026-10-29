@@ -1,0 +1,3 @@
+export function AdminOtherPanel({ mode }: { mode: string }) {
+  return <section className="rounded-2xl border border-border bg-white p-6"><p className="text-xs font-bold uppercase tracking-wider text-istin-blue">Administration</p><h1 className="mt-2 font-heading text-2xl font-bold">{mode}</h1><p className="mt-3 text-sm text-muted-foreground">Ouvre cette rubrique depuis le menu pour modifier son contenu.</p></section>;
+}
