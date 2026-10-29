@@ -6,6 +6,7 @@ import { StudentProfileForm } from "@/components/student/StudentProfileForm";
 import { StudentProposalForm } from "@/components/student/StudentProposalForm";
 import { StudentPollsPanel } from "@/components/student/StudentPollsPanel";
 import { NotificationsPanel } from "@/components/student/NotificationsPanel";
+import { EnablePushToggle } from "@/components/student/EnablePushToggle";
 import { NotificationBell } from "@/components/student/NotificationBell";
 import { StudentTicketForm } from "@/components/student/StudentTicketForm";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -109,7 +110,12 @@ export default async function EspaceSectionPage({
 
           {section === "demandes" && <StudentTicketForm userId={user!.id} />}
 
-          {section === "notifications" && <NotificationsPanel userId={user!.id} />}
+          {section === "notifications" && (
+            <div className="space-y-6">
+              <EnablePushToggle userId={user!.id} />
+              <NotificationsPanel userId={user!.id} />
+            </div>
+          )}
 
           {section === "inscriptions" && (
             <section className="max-w-2xl rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-[#f2f7fb] p-8 shadow-sm">
