@@ -1,0 +1,5 @@
+## Correctifs (28 oct 2026 · v5)
+1. Logo ISTIN (SVG) intégré directement dans le code (composant IstinLogo) : admin, connexion admin, en-tête, pied de page. Plus aucun fichier image ni cache.
+2. Tous les champs du site ont un libellé précis + un exemple (« Ex. … ») à l'intérieur.
+3. Menus déroulants : tous remplacés par le menu ISTIN (StyledSelect). Calendriers : nouveau calendrier ISTIN (DatePicker), le calendrier natif du navigateur n'étant pas stylable.
+Après extraction : supprimer .next, npm install, npm run dev, puis Ctrl+F5.

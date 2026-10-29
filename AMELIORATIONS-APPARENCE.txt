@@ -1,0 +1,12 @@
+ISTIN MUTUELLE — Améliorations de présentation
+
+Palette de couleurs, textes, liens, données et connexion conservés.
+Menu mobile corrigé conservé sans modification.
+Accueil moins haut, image plus lisible, espacements harmonisés.
+Cartes et boutons affinés, sections sans données allégées.
+Champs lisibles sur iPhone sans zoom automatique au focus.
+
+Contrôles : syntaxe des cinq composants modifiés et compilation CSS validées. Présentation isolée contrôlée à 320, 390, 1024 et 1280 pixels.
+Limites : aperçu isolé sans en-tête ni services connectés ; connexion, données réelles et navigation complète non testées. Aucun test sur iPhone physique.
+
+Cette archive conserve le projet original ; elle ne remplace pas le site par un nouveau projet.
