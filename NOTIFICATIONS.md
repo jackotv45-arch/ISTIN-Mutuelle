@@ -1,27 +1,39 @@
-# Notifications in-app — Phase 1
+# Notifications ISTIN MUTUELLE
 
-## SQL à exécuter (Supabase → SQL Editor)
+## Scripts SQL (ordre)
 
-1. `supabase/setup_platform_features.sql` (si pas déjà fait)
-2. `supabase/setup_notifications_phase1.sql` (**obligatoire** pour `type`, `notify_user`, `notify_all_students` enrichi)
+1. `setup_platform_features.sql` — table + RLS de base  
+2. `setup_notifications_phase1.sql` — colonnes `type` / `meta`, `notify_user`, `notify_all_students`  
+3. `setup_notifications_phase2.sql` — `dispatch_event_reminders()` (J-3, J-1, jour J)
 
-## Types Phase 1 branchés
+## Phase 1 — automatique à l’action admin
 
 | Type | Déclencheur |
 |------|-------------|
-| `event_published` | Publication d’un événement (admin) |
+| `event_published` | Publication d’un événement |
 | `poll_opened` | Ouverture d’un sondage |
-| `ticket_answered` / `ticket_in_progress` / `ticket_closed` | Mise à jour d’une demande |
-| `proposal_*` | Changement de statut d’une proposition |
-| `news_published` | Publication d’actualité avec option notifier |
+| `ticket_*` | Mise à jour d’une demande |
+| `proposal_*` | Changement de statut proposition |
+| `news_published` | Actualité publiée + confirmation « Notifier » |
+| `account_welcome` | Inscription étudiant réussie |
 
-## Côté étudiant
+## Phase 2 — rappels événements
 
-- `/espace/notifications` — liste, marquer lu, tout marquer lu, lien « Ouvrir »
+Appeler périodiquement (SQL Editor ou cron Supabase) :
 
-## Test rapide
+```sql
+select public.dispatch_event_reminders();
+```
 
-1. Compte admin : publier un événement → vérifier en SQL ou en étudiant que des lignes `notifications` sont créées.
-2. Ouvrir un sondage → même vérif.
-3. Répondre à un ticket → seule l’auteur reçoit la notif.
-4. Compte étudiant : `/espace/notifications` affiche les alertes.
+Crée les notifs `event_reminder_3d`, `event_reminder_1d`, `event_today` sans doublon récent.
+
+## UI étudiant
+
+- `/espace/notifications` — liste complète  
+- Cloche flottante (badge non lus) sur l’espace étudiant  
+
+## PWA
+
+- `manifest.webmanifest` + `sw.js` (cache v2)  
+- Bannière d’installation (`PwaRegister`)  
+- Push système téléphone = phase ultérieure (permissions + clés VAPID)

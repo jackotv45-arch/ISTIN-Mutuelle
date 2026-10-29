@@ -2,6 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type NotificationType =
   | "event_published"
+  | "event_today"
+  | "event_reminder_1d"
+  | "event_reminder_3d"
   | "poll_opened"
   | "ticket_answered"
   | "ticket_in_progress"
@@ -60,6 +63,9 @@ export async function notifyUser(
 export function notificationTypeLabel(type: string | null | undefined) {
   const map: Record<string, string> = {
     event_published: "Événement",
+    event_reminder_3d: "Rappel",
+    event_reminder_1d: "Rappel",
+    event_today: "Aujourd'hui",
     poll_opened: "Sondage",
     ticket_answered: "Demande",
     ticket_in_progress: "Demande",

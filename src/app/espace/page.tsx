@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
+import { NotificationBell } from "@/components/student/NotificationBell";
 import { Footer } from "@/components/layout/Footer";
 import { StudentSignOutButton } from "@/components/student/StudentSignOutButton";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -74,6 +75,9 @@ export default async function EspacePage() {
   return (
     <>
       <Header />
+      <div className="fixed bottom-5 right-5 z-40 sm:bottom-8 sm:right-8">
+        <NotificationBell userId={user!.id} />
+      </div>
       <main className="flex-1 bg-[#f5f8fb]">
         {/* Hero */}
         <section className="relative overflow-hidden bg-gradient-to-br from-[#062a4a] via-[#0b4777] to-[#0b63ab] pt-28 pb-16 text-white sm:pt-32 sm:pb-20">

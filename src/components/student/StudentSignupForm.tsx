@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { NotificationType } from "@/lib/notifications";
 
 export function StudentSignupForm() {
   const router = useRouter();
@@ -48,6 +49,14 @@ export function StudentSignupForm() {
       return;
     }
     if (data.session) {
+      // Notification de bienvenue (l'étudiant peut s'auto-notifier via RLS)
+      await supabase.from("notifications").insert({
+        user_id: data.user.id,
+        title: "Bienvenue",
+        body: "Ton espace étudiant ISTIN MUTUELLE est prêt.",
+        link: "/espace",
+        type: "account_welcome" satisfies NotificationType as string,
+      });
       router.replace("/espace");
       router.refresh();
       return;
