@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { notifyUser } from "@/lib/notifications";
 import { StyledSelect } from "@/components/ui/StyledSelect";
 
 type Ticket = {
@@ -71,14 +72,32 @@ export function AdminTicketsPanel() {
       p_entity_id: id,
       p_meta: patch,
     });
-    // notify student
-    const ticket = items.find((t) => t.id === id);
+    const ticket = items.find((row) => row.id === id);
     if (ticket) {
-      await supabase.from("notifications").insert({
-        user_id: ticket.user_id,
-        title: "Mise à jour de ta demande",
-        body: `« ${ticket.subject} » — statut : ${patch.status ?? ticket.status}`,
+      const status = patch.status ?? ticket.status;
+      let type: "ticket_answered" | "ticket_in_progress" | "ticket_closed" = "ticket_answered";
+      let title = "Réponse du bureau";
+      let body = "Le bureau a mis à jour ta demande : « " + ticket.subject + " ».";
+      if (patch.admin_note !== undefined) {
+        title = "Réponse du bureau";
+        body = "Le bureau a répondu à ta demande : « " + ticket.subject + " ».";
+        type = "ticket_answered";
+      } else if (status === "in_progress") {
+        title = "Demande prise en charge";
+        body = "Ta demande « " + ticket.subject + " » est en cours de traitement.";
+        type = "ticket_in_progress";
+      } else if (status === "resolved" || status === "closed") {
+        title = "Demande clôturée";
+        body = "Ta demande « " + ticket.subject + " » a été clôturée.";
+        type = "ticket_closed";
+      }
+      await notifyUser(supabase, {
+        userId: ticket.user_id,
+        title,
+        body,
         link: "/espace/demandes",
+        type,
+        meta: { ticket_id: ticket.id, status },
       });
     }
     await load();

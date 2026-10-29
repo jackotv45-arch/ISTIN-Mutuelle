@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { notificationTypeLabel } from "@/lib/notifications";
 
 type Notif = {
   id: string;
   title: string;
   body: string | null;
   link: string | null;
+  type?: string | null;
   is_read: boolean;
   created_at: string;
 };
@@ -18,33 +20,44 @@ export function NotificationsPanel({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function load() {
-    setLoading(true);
-    setError("");
+  const load = useCallback(async () => {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
-      setError("Connexion indisponible.");
+      setError("Supabase non configuré.");
       setLoading(false);
       return;
     }
-    const { data, error: loadError } = await supabase
+    const { data, error: qError } = await supabase
       .from("notifications")
-      .select("id,title,body,link,is_read,created_at")
+      .select("id,title,body,link,type,is_read,created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(50);
-    if (loadError) {
-      setError("Impossible de charger les notifications. Vérifie setup_platform_features.sql.");
-      setItems([]);
+    if (qError) {
+      // fallback without type column if SQL phase1 not applied yet
+      const retry = await supabase
+        .from("notifications")
+        .select("id,title,body,link,is_read,created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (retry.error) {
+        setError("Impossible de charger les notifications. Exécute setup_notifications_phase1.sql puis setup_platform_features.sql.");
+        setItems([]);
+      } else {
+        setItems((retry.data as Notif[]) ?? []);
+        setError("");
+      }
     } else {
       setItems((data as Notif[]) ?? []);
+      setError("");
     }
     setLoading(false);
-  }
+  }, [userId]);
 
   useEffect(() => {
     void load();
-  }, [userId]);
+  }, [load]);
 
   async function markRead(id: string) {
     const supabase = createSupabaseBrowserClient();
@@ -74,10 +87,10 @@ export function NotificationsPanel({ userId }: { userId: string }) {
 
   if (!items.length) {
     return (
-      <section className="max-w-2xl rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-[#f2f7fb] p-8 shadow-sm">
+      <section className="rounded-2xl border border-dashed border-slate-200 bg-gradient-to-br from-white to-[#f2f7fb] p-8 shadow-sm">
         <h2 className="font-heading text-xl font-bold text-[#1c2733]">Aucune notification</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Les alertes de la mutuelle (événements, réponses, sondages) s’afficheront ici.
+          Les alertes de la mutuelle (événements, sondages, réponses du bureau, actualités) s’afficheront ici.
         </p>
       </section>
     );
@@ -89,7 +102,7 @@ export function NotificationsPanel({ userId }: { userId: string }) {
     <section className="max-w-2xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {unread > 0 ? `${unread} non lue(s)` : "Toutes lues"}
+          {unread > 0 ? `${unread} non lue${unread > 1 ? "s" : ""}` : "Toutes lues"}
         </p>
         {unread > 0 && (
           <button
@@ -106,12 +119,20 @@ export function NotificationsPanel({ userId }: { userId: string }) {
           <li
             key={n.id}
             className={
-              "rounded-2xl border p-4 shadow-sm " +
+              "rounded-2xl border p-4 shadow-sm transition-colors " +
               (n.is_read ? "border-border bg-white" : "border-istin-blue/25 bg-[#eef5fb]")
             }
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-istin-blue/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-istin-blue">
+                    {notificationTypeLabel(n.type)}
+                  </span>
+                  {!n.is_read && (
+                    <span className="h-2 w-2 rounded-full bg-istin-red" title="Non lue" />
+                  )}
+                </div>
                 <p className="font-semibold text-[#1c2733]">{n.title}</p>
                 {n.body && <p className="mt-1 text-sm text-muted-foreground">{n.body}</p>}
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -122,14 +143,20 @@ export function NotificationsPanel({ userId }: { userId: string }) {
                 <button
                   type="button"
                   onClick={() => void markRead(n.id)}
-                  className="text-xs font-semibold text-istin-blue hover:underline"
+                  className="shrink-0 text-xs font-semibold text-istin-blue hover:underline"
                 >
                   Marquer lu
                 </button>
               )}
             </div>
             {n.link && (
-              <Link href={n.link} className="mt-3 inline-block text-sm font-semibold text-istin-blue hover:underline">
+              <Link
+                href={n.link}
+                onClick={() => {
+                  if (!n.is_read) void markRead(n.id);
+                }}
+                className="mt-3 inline-block text-sm font-semibold text-istin-blue hover:underline"
+              >
                 Ouvrir →
               </Link>
             )}

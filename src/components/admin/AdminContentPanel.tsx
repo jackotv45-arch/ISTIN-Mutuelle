@@ -27,12 +27,13 @@ export function AdminContentPanel() {
   const [content, setContent] = useState("");
   const [image, setImage] = useState(imageOptions[1].value);
   const [published, setPublished] = useState(false);
+  const [notifyStudents, setNotifyStudents] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<AnnouncementItem | null>(null);
   const [notice, setNotice] = useState("");
   const [isError, setIsError] = useState(false);
   const ready = newsConnection === "connected";
-  function reset() { setEditingSlug(null); setTitle(""); setCategory("Annonce"); setExcerpt(""); setContent(""); setImage(imageOptions[1].value); setPublished(false); }
+  function reset() { setEditingSlug(null); setTitle(""); setCategory("Annonce"); setExcerpt(""); setContent(""); setImage(imageOptions[1].value); setPublished(false); setNotifyStudents(false); }
   function edit(item: AnnouncementItem) {
     setEditingSlug(item.slug); setTitle(item.title); setCategory(item.category); setExcerpt(item.excerpt); setContent(item.content); setImage(item.image); setPublished(item.published !== false);
     document.getElementById("content-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -60,7 +61,7 @@ export function AdminContentPanel() {
     const result = await deleteAnnouncement(deleting.slug); setIsError(!result.ok); setNotice(result.message); if (result.ok) setDeleting(null);
   }
   return <section className="space-y-5">
-    <div className="rounded-2xl border border-border bg-white p-5"><p className="text-xs font-bold uppercase tracking-wider text-istin-blue">Publications</p><h1 className="mt-1 font-heading text-2xl font-bold">Gérer les actualités</h1><p className="mt-2 text-sm text-muted-foreground">Les brouillons restent privés. Les actualités publiées sont visibles sur le site.</p>{newsConnection === "loading" && <p className="mt-3 text-sm text-muted-foreground">Chargement des actualités…</p>}{newsConnection === "error" && <p role="alert" className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-950">{newsError}</p>}</div>
+    <div className="rounded-2xl border border-border bg-white p-5"><p className="text-xs font-bold uppercase tracking-wider text-istin-blue">Publications</p><h1 className="mt-1 font-heading text-2xl font-bold">Gérer les actualités</h1><p className="mt-2 text-sm text-muted-foreground">Les brouillons restent privés. Les actualités publiées sont visibles sur le site. Coche « Notifier » pour alerter les étudiants à la publication.</p>{newsConnection === "loading" && <p className="mt-3 text-sm text-muted-foreground">Chargement des actualités…</p>}{newsConnection === "error" && <p role="alert" className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-950">{newsError}</p>}</div>
     <div className="grid gap-5 xl:grid-cols-[.8fr_1.2fr]">
       <form id="content-form" onSubmit={submit} className="space-y-4 rounded-2xl border border-border bg-white p-5">
         <h2 className="font-heading text-lg font-bold">{editingSlug ? "Modifier l’actualité" : "Nouvelle actualité"}</h2>
@@ -102,7 +103,13 @@ export function AdminContentPanel() {
         <div className="flex flex-wrap gap-2"><button disabled={!ready} className="btn btn-primary disabled:opacity-50">{editingSlug ? "Enregistrer les modifications" : "Enregistrer l’actualité"}</button>{editingSlug && <button type="button" onClick={reset} className="rounded-lg border border-border px-4 py-2 text-sm font-semibold">Annuler</button>}</div>
       </form>
       <div className="space-y-3"><div><h2 className="font-heading text-lg font-bold">Publications et brouillons</h2><p className="text-xs text-muted-foreground">{ready ? articles.length + " élément(s) enregistrés" : "Données indisponibles"}</p></div>
-        {articles.map((item) => <article key={item.slug} className="flex flex-col gap-3 rounded-xl border border-border bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className={"rounded-full px-2.5 py-1 text-[10px] font-bold uppercase " + (item.published === false ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-800")}>{item.published === false ? "Brouillon" : "Publié"}</span><span className="text-xs text-muted-foreground">{item.category}</span></div><h3 className="mt-1 truncate font-heading font-semibold">{item.title}</h3></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => edit(item)} className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">Modifier</button><button type="button" disabled={!ready} onClick={async () => { const result = await setAnnouncementPublished(item.slug, item.published === false); setIsError(!result.ok); setNotice(result.message); }} className="rounded-lg border border-istin-blue/30 px-3 py-2 text-xs font-semibold text-istin-blue disabled:opacity-50">{item.published === false ? "Publier" : "Dépublier"}</button><button type="button" onClick={() => setDeleting(item)} className="rounded-lg border border-istin-red/30 px-3 py-2 text-xs font-semibold text-istin-red">Supprimer</button></div></article>)}
+        {articles.map((item) => <article key={item.slug} className="flex flex-col gap-3 rounded-xl border border-border bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className={"rounded-full px-2.5 py-1 text-[10px] font-bold uppercase " + (item.published === false ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-800")}>{item.published === false ? "Brouillon" : "Publié"}</span><span className="text-xs text-muted-foreground">{item.category}</span></div><h3 className="mt-1 truncate font-heading font-semibold">{item.title}</h3></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => edit(item)} className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">Modifier</button><button type="button" disabled={!ready} onClick={async () => {
+                  const willPublish = item.published === false;
+                  const shouldNotify = willPublish && window.confirm("Notifier tous les étudiants de cette actualité ?\n\nOK = oui, Annuler = publier sans notification.");
+                  const result = await setAnnouncementPublished(item.slug, willPublish, shouldNotify);
+                  setIsError(!result.ok);
+                  setNotice(result.message);
+                }} className="rounded-lg border border-istin-blue/30 px-3 py-2 text-xs font-semibold text-istin-blue disabled:opacity-50">{item.published === false ? "Publier" : "Dépublier"}</button><button type="button" onClick={() => setDeleting(item)} className="rounded-lg border border-istin-red/30 px-3 py-2 text-xs font-semibold text-istin-red">Supprimer</button></div></article>)}
         {ready && articles.length === 0 && <div className="rounded-xl border border-dashed border-border bg-white p-8 text-center text-sm text-muted-foreground">Aucune actualité enregistrée. Tu peux créer la première publication.</div>}
       </div>
     </div>

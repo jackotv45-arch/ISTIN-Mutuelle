@@ -4,6 +4,7 @@ import { StyledSelect } from "@/components/ui/StyledSelect";
 
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { notifyUser } from "@/lib/notifications";
 
 type Row = {
   id: string;
@@ -63,6 +64,7 @@ export function AdminProposalsPanel() {
     setError("");
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
+    const previous = rows.find((row) => row.id === id);
     const { error: upError } = await supabase
       .from("suggestions")
       .update({ ...patch, updated_at: new Date().toISOString() })
@@ -72,6 +74,32 @@ export function AdminProposalsPanel() {
       return;
     }
     setRows((current) => current.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+    if (previous && patch.status && patch.status !== previous.status && previous.user_id) {
+      let type: "proposal_under_review" | "proposal_accepted" | "proposal_rejected" | "proposal_answered" = "proposal_answered";
+      let title = "Réponse à ta proposition";
+      let body = "Le bureau a mis à jour ta proposition : « " + previous.title + " ».";
+      if (patch.status === "reviewing") {
+        type = "proposal_under_review";
+        title = "Proposition examinée";
+        body = "Ta proposition « " + previous.title + " » est en cours d’examen.";
+      } else if (patch.status === "accepted" || patch.status === "done") {
+        type = "proposal_accepted";
+        title = "Proposition retenue";
+        body = "Ta proposition « " + previous.title + " » a été retenue.";
+      } else if (patch.status === "rejected") {
+        type = "proposal_rejected";
+        title = "Retour sur ta proposition";
+        body = "Ta proposition « " + previous.title + " » n’a pas été retenue. Consulte le retour du bureau.";
+      }
+      await notifyUser(supabase, {
+        userId: previous.user_id,
+        title,
+        body,
+        link: "/espace/propositions",
+        type,
+        meta: { proposal_id: previous.id, status: patch.status },
+      });
+    }
     setNotice("Proposition mise à jour.");
   }
 

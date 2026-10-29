@@ -5,6 +5,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { mapAnnouncement, persistAnnouncementImage, slugForTitle } from "@/lib/supabase/news";
 import { librevilleDateTimeToIso, mapEvent, type EventInput } from "@/lib/supabase/events";
 import type { AnnouncementItem, EventItem } from "@/lib/content-types";
+import { notifyAllStudents } from "@/lib/notifications";
 
 export type ActionResult = { ok: boolean; message: string };
 type Connection = "loading" | "connected" | "error";
@@ -17,7 +18,7 @@ type PlatformStore = {
   eventError: string | null;
   addAnnouncement: (item: Pick<AnnouncementItem, "title" | "category" | "excerpt" | "content" | "image">, published: boolean) => Promise<ActionResult>;
   updateAnnouncement: (slug: string, item: Pick<AnnouncementItem, "title" | "category" | "excerpt" | "content" | "image">, published: boolean) => Promise<ActionResult>;
-  setAnnouncementPublished: (slug: string, published: boolean) => Promise<ActionResult>;
+  setAnnouncementPublished: (slug: string, published: boolean, notifyStudents?: boolean) => Promise<ActionResult>;
   deleteAnnouncement: (slug: string) => Promise<ActionResult>;
   addEvent: (item: EventInput) => Promise<ActionResult>;
   updateEvent: (slug: string, item: EventInput) => Promise<ActionResult>;
@@ -134,12 +135,22 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     return { ok: true, message: "Actualité mise à jour." };
   }, [supabase]);
 
-  const setAnnouncementPublished = useCallback(async (slug: string, published: boolean): Promise<ActionResult> => {
+  const setAnnouncementPublished = useCallback(async (slug: string, published: boolean, notifyStudents = false): Promise<ActionResult> => {
     if (!supabase) return { ok: false, message: "La connexion Supabase n’est pas configurée." };
     const { data, error } = await supabase.from("announcements").update({ status: published ? "published" : "draft", published_at: published ? new Date().toISOString() : null }).eq("slug", slug).select("*").maybeSingle();
     if (error || !data) return { ok: false, message: "Changement de statut refusé par Supabase." };
     setArticles((current) => current.map((article) => article.slug === slug ? mapAnnouncement(data as Parameters<typeof mapAnnouncement>[0]) : article));
-    return { ok: true, message: published ? "Actualité publiée." : "Actualité dépubliée." };
+    if (published && notifyStudents) {
+      const mapped = mapAnnouncement(data as Parameters<typeof mapAnnouncement>[0]);
+      await notifyAllStudents(supabase, {
+        title: "Nouvelle actualité",
+        body: mapped.title,
+        link: "/actualites/" + mapped.slug,
+        type: "news_published",
+        meta: { slug: mapped.slug },
+      });
+    }
+    return { ok: true, message: published ? (notifyStudents ? "Actualité publiée et étudiants notifiés." : "Actualité publiée.") : "Actualité dépubliée." };
   }, [supabase]);
 
   const deleteAnnouncement = useCallback(async (slug: string): Promise<ActionResult> => {
@@ -163,8 +174,18 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       practical_info: item.practicalInfo, status: item.published ? "published" : "draft", created_by: user.id,
     }).select("*").single();
     if (error || !data) return { ok: false, message: "Événement non enregistré. Vérifie les règles Supabase." };
-    setEvents((current) => [...current, mapEvent(data as Parameters<typeof mapEvent>[0])].sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt)));
-    return { ok: true, message: item.published ? "Événement publié dans l’agenda." : "Brouillon d’événement enregistré." };
+    const mapped = mapEvent(data as Parameters<typeof mapEvent>[0]);
+    setEvents((current) => [...current, mapped].sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt)));
+    if (item.published) {
+      await notifyAllStudents(supabase, {
+        title: "Nouvel événement",
+        body: mapped.title + " a été publié. Consulte l’agenda.",
+        link: "/evenements/" + mapped.slug,
+        type: "event_published",
+        meta: { slug: mapped.slug },
+      });
+    }
+    return { ok: true, message: item.published ? "Événement publié et étudiants notifiés." : "Brouillon d’événement enregistré." };
   }, [supabase]);
 
   const updateEvent = useCallback(async (slug: string, item: EventInput): Promise<ActionResult> => {
@@ -184,8 +205,18 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     if (!supabase) return { ok: false, message: "La connexion Supabase n’est pas configurée." };
     const { data, error } = await supabase.from("events").update({ status: published ? "published" : "draft" }).eq("slug", slug).select("*").maybeSingle();
     if (error || !data) return { ok: false, message: "Changement de statut refusé par Supabase." };
-    setEvents((current) => current.map((event) => event.slug === slug ? mapEvent(data as Parameters<typeof mapEvent>[0]) : event));
-    return { ok: true, message: published ? "Événement publié." : "Événement dépublié." };
+    const mapped = mapEvent(data as Parameters<typeof mapEvent>[0]);
+    setEvents((current) => current.map((event) => event.slug === slug ? mapped : event));
+    if (published) {
+      await notifyAllStudents(supabase, {
+        title: "Nouvel événement",
+        body: mapped.title + " a été publié. Consulte l’agenda.",
+        link: "/evenements/" + mapped.slug,
+        type: "event_published",
+        meta: { slug: mapped.slug },
+      });
+    }
+    return { ok: true, message: published ? "Événement publié et étudiants notifiés." : "Événement dépublié." };
   }, [supabase]);
 
   const deleteEvent = useCallback(async (slug: string): Promise<ActionResult> => {

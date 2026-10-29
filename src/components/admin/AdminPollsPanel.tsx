@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { notifyAllStudents } from "@/lib/notifications";
 
 type Poll = {
   id: string;
@@ -144,8 +145,20 @@ export function AdminPollsPanel() {
       setError("Mise à jour du statut refusée.");
       return;
     }
+    const poll = polls.find((p) => p.id === id);
     setPolls((current) => current.map((p) => (p.id === id ? { ...p, status } : p)));
-    setNotice(status === "open" ? "Sondage ouvert aux étudiants." : "Statut mis à jour.");
+    if (status === "open" && poll) {
+      await notifyAllStudents(supabase, {
+        title: "Nouveau sondage",
+        body: "Un sondage est ouvert : " + poll.title + ". Donne ton avis.",
+        link: "/espace/sondages",
+        type: "poll_opened",
+        meta: { poll_id: poll.id },
+      });
+      setNotice("Sondage ouvert et étudiants notifiés.");
+    } else {
+      setNotice("Statut mis à jour.");
+    }
   }
 
   return (
