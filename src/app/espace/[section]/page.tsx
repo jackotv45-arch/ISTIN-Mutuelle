@@ -48,6 +48,15 @@ export default async function EspaceSectionPage({
     created_at: string;
   }> = [];
 
+  let registeredEvents: Array<{
+    id: string;
+    slug: string;
+    title: string;
+    starts_at: string;
+    location: string | null;
+    registered_at: string;
+  }> = [];
+
   if (section === "propositions") {
     const { data } = await supabase!
       .from("suggestions")
@@ -55,6 +64,30 @@ export default async function EspaceSectionPage({
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
     proposals = data ?? [];
+  }
+
+  if (section === "inscriptions") {
+    const { data: registrations } = await supabase!
+      .from("event_registrations")
+      .select("event_id,registered_at")
+      .eq("user_id", user!.id)
+      .eq("status", "registered")
+      .order("registered_at", { ascending: false });
+
+    const eventIds = [...new Set((registrations ?? []).map((registration) => registration.event_id))];
+    if (eventIds.length) {
+      const { data: events } = await supabase!
+        .from("events")
+        .select("id,slug,title,starts_at,location")
+        .in("id", eventIds);
+      const byId = new Map((events ?? []).map((event) => [event.id, event]));
+      registeredEvents = (registrations ?? [])
+        .flatMap((registration) => {
+          const event = byId.get(registration.event_id);
+          return event ? [{ ...event, registered_at: registration.registered_at }] : [];
+        })
+        .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at));
+    }
   }
 
   const { data: profile } =
@@ -118,16 +151,34 @@ export default async function EspaceSectionPage({
           )}
 
           {section === "inscriptions" && (
-            <section className="max-w-2xl rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-[#f2f7fb] p-8 shadow-sm">
-              <h2 className="font-heading text-xl font-bold text-[#1c2733]">Inscriptions</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Tu n’as pas encore d’inscription enregistrée. Consulte l’agenda pour découvrir les
-                prochains événements.
-              </p>
-              <Link href="/evenements" className="btn btn-primary mt-5">
-                Voir l’agenda
-              </Link>
-            </section>
+            <div className="space-y-4">
+              {registeredEvents.length ? registeredEvents.map((event) => (
+                <article key={event.id} className="max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-istin-red">
+                    {new Date(event.starts_at).toLocaleString("fr-FR", {
+                      dateStyle: "full",
+                      timeStyle: "short",
+                      timeZone: "Africa/Libreville",
+                    })}
+                  </p>
+                  <h2 className="mt-2 font-heading text-xl font-bold text-[#1c2733]">{event.title}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{event.location || "Lieu à préciser"}</p>
+                  <Link href={`/evenements/${event.slug}`} className="mt-4 inline-flex text-sm font-semibold text-istin-blue hover:underline">
+                    Voir l’événement →
+                  </Link>
+                </article>
+              )) : (
+                <section className="max-w-2xl rounded-3xl border border-slate-200 bg-gradient-to-br from-white to-[#f2f7fb] p-8 shadow-sm">
+                  <h2 className="font-heading text-xl font-bold text-[#1c2733]">Aucune inscription pour le moment</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Consulte l’agenda pour découvrir les événements ouverts aux inscriptions en ligne.
+                  </p>
+                  <Link href="/evenements" className="btn btn-primary mt-5">
+                    Voir l’agenda
+                  </Link>
+                </section>
+              )}
+            </div>
           )}
 
           {section === "billets" && (

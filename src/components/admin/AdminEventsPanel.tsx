@@ -28,6 +28,7 @@ const emptyForm = (): EventInput => ({
   organizer: "",
   image: "/images/pro/hero-4.jpg",
   practicalInfo: [],
+  registrationEnabled: false,
   published: false,
 });
 
@@ -73,6 +74,7 @@ export function AdminEventsPanel() {
       organizer: item.organizer === "À confirmer" ? "" : item.organizer,
       image: item.image || "/images/pro/hero-4.jpg",
       practicalInfo: item.practicalInfo ?? [],
+      registrationEnabled: item.registrationEnabled,
       published: item.published !== false,
     });
     setNotice("Modification en cours : « " + item.title + " »");
@@ -160,6 +162,7 @@ export function AdminEventsPanel() {
       organizer: form.organizer || "Organisateur à confirmer",
       image: form.image,
       practicalInfo: form.practicalInfo,
+      registrationEnabled: form.registrationEnabled,
       published: form.published,
       statusLabel: form.published ? "Publié" : "Brouillon",
     } as EventItem);
@@ -284,6 +287,22 @@ export function AdminEventsPanel() {
               onChange={(e) => update("practicalInfo", e.target.value.split("\n"))}
               className="mt-1 w-full rounded-lg border border-border p-3"
             />
+          </label>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-istin-blue/20 bg-[#eef5fb] p-4">
+            <input
+              type="checkbox"
+              checked={form.registrationEnabled}
+              onChange={(event) => update("registrationEnabled", event.target.checked)}
+              className="mt-1 h-4 w-4 accent-[#0b63ab]"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-[#062a4a]">
+                Ouvrir les inscriptions en ligne
+              </span>
+              <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                Les étudiants connectés pourront s’inscrire depuis la fiche de l’événement.
+              </span>
+            </span>
           </label>
           <div className="space-y-3 rounded-xl border border-border bg-slate-50 p-3">
             <label className="block text-sm font-medium">

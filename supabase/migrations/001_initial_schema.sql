@@ -84,6 +84,7 @@ create table public.events (
   organizer text,
   capacity int,
   registration_deadline timestamptz,
+  registration_enabled boolean not null default false,
   status public.event_status not null default 'draft',
   practical_info text[],
   created_by uuid references public.profiles (id),

@@ -171,7 +171,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.from("events").insert({
       slug: slugForTitle(item.title), title: item.title, description: item.description, body: item.content, cover_url: image.url,
       starts_at: startsAt, location: item.location || null, organizer: item.organizer || null,
-      practical_info: item.practicalInfo, status: item.published ? "published" : "draft", created_by: user.id,
+      practical_info: item.practicalInfo, registration_enabled: item.registrationEnabled,
+      status: item.published ? "published" : "draft", created_by: user.id,
     }).select("*").single();
     if (error || !data) return { ok: false, message: "Événement non enregistré. Vérifie les règles Supabase." };
     const mapped = mapEvent(data as Parameters<typeof mapEvent>[0]);
@@ -194,7 +195,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     if (!image.ok) return { ok: false, message: image.error };
     const { data, error } = await supabase.from("events").update({
       title: item.title, description: item.description, body: item.content, cover_url: image.url, starts_at: librevilleDateTimeToIso(item.startAt),
-      location: item.location || null, organizer: item.organizer || null, practical_info: item.practicalInfo, status: item.published ? "published" : "draft",
+      location: item.location || null, organizer: item.organizer || null, practical_info: item.practicalInfo,
+      registration_enabled: item.registrationEnabled, status: item.published ? "published" : "draft",
     }).eq("slug", slug).select("*").maybeSingle();
     if (error || !data) return { ok: false, message: "Modification refusée par Supabase." };
     setEvents((current) => current.map((event) => event.slug === slug ? mapEvent(data as Parameters<typeof mapEvent>[0]) : event).sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt)));

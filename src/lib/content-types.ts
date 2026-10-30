@@ -11,6 +11,7 @@ export type AnnouncementItem = {
 };
 
 export type EventItem = {
+  id?: string;
   slug: string;
   title: string;
   description: string;
@@ -22,5 +23,6 @@ export type EventItem = {
   statusLabel: string;
   image: string;
   practicalInfo: string[];
+  registrationEnabled: boolean;
   published?: boolean;
 };

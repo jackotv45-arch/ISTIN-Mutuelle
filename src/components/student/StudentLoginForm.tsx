@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export function StudentLoginForm({ reason }: { reason?: string }) {
+export function StudentLoginForm({ reason, next }: { reason?: string; next?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -37,8 +37,15 @@ export function StudentLoginForm({ reason }: { reason?: string }) {
       setError("Ce compte n’a pas encore l’accès étudiant. Inscris-toi avec une invitation fournie par la mutuelle.");
       return;
     }
-    // Navigation complète pour laisser le navigateur enregistrer les cookies de session
-    window.location.assign("/espace");
+    // Navigation complète pour laisser le navigateur enregistrer les cookies de session.
+    let returnPath = "/espace";
+    if (next?.startsWith("/") && !next.startsWith("//")) {
+      const destination = new URL(next, window.location.origin);
+      if (destination.origin === window.location.origin) {
+        returnPath = destination.pathname + destination.search + destination.hash;
+      }
+    }
+    window.location.assign(returnPath);
   }
 
   return <form onSubmit={submit} className="space-y-4 rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">

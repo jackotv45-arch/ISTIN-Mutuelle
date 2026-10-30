@@ -2,10 +2,11 @@ import type { EventItem } from "@/lib/content-types";
 
 export type EventInput = Pick<
   EventItem,
-  "title" | "description" | "content" | "startAt" | "location" | "organizer" | "image" | "practicalInfo"
+  "title" | "description" | "content" | "startAt" | "location" | "organizer" | "image" | "practicalInfo" | "registrationEnabled"
 > & { published: boolean };
 
 type EventRow = {
+  id: string;
   slug: string;
   title: string;
   description: string | null;
@@ -15,6 +16,7 @@ type EventRow = {
   location: string | null;
   organizer: string | null;
   practical_info: string[] | null;
+  registration_enabled?: boolean | null;
   status: "draft" | "published" | "full" | "ended" | "cancelled";
 };
 
@@ -48,6 +50,7 @@ export function mapEvent(row: EventRow): EventItem {
           : "À VENIR";
 
   return {
+    id: row.id,
     slug: row.slug,
     title: row.title,
     description: row.description ?? "",
@@ -65,6 +68,7 @@ export function mapEvent(row: EventRow): EventItem {
     statusLabel,
     image: row.cover_url ?? "/images/pro/hero-4.jpg",
     practicalInfo: row.practical_info ?? [],
+    registrationEnabled: row.registration_enabled === true,
     published: row.status !== "draft",
   };
 }
