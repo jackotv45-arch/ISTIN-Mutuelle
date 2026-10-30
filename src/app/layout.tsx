@@ -1,16 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import { PlatformProvider } from "@/lib/platform-store";
 import { MotionEffects } from "@/components/ui/MotionEffects";
 import { PwaRegister } from "@/components/ui/PwaRegister";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import "./globals.css";
 
-const montserrat = Montserrat({
+const montserrat = localFont({
+  src: "./fonts/montserrat-variable.ttf",
   variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: "100 900",
   display: "swap",
 });
 

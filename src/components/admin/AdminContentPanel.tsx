@@ -146,10 +146,11 @@ export function AdminContentPanel() {
       category: category.trim() || "Annonce",
       excerpt: excerpt.trim() || "Aucun résumé pour le moment.",
       content: content.trim() || "Aucun texte pour le moment.",
+      date: "Aperçu",
+      author: "Mutuelle ISTIN",
       image,
       published,
-      dateLabel: "Aperçu",
-    } as AnnouncementItem);
+    });
   }
 
   return (
