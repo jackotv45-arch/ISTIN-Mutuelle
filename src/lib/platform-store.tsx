@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { mapAnnouncement, persistAnnouncementImage, slugForTitle } from "@/lib/supabase/news";
 import { librevilleDateTimeToIso, mapEvent, type EventInput } from "@/lib/supabase/events";
@@ -9,6 +10,7 @@ import { notifyAllStudents } from "@/lib/notifications";
 
 export type ActionResult = { ok: boolean; message: string };
 type Connection = "loading" | "connected" | "error";
+type ContentLoadScope = "none" | "home" | "all";
 type PlatformStore = {
   articles: AnnouncementItem[];
   newsConnection: Connection;
@@ -29,6 +31,19 @@ const PlatformContext = createContext<PlatformStore | null>(null);
 
 export function PlatformProvider({ children }: { children: ReactNode }) {
   const supabase = createSupabaseBrowserClient();
+  const pathname = usePathname();
+  const announcementScope: ContentLoadScope = pathname === "/"
+    ? "home"
+    : pathname.startsWith("/actualites") || pathname === "/admin"
+      ? "all"
+      : "none";
+  const eventScope: ContentLoadScope = pathname === "/"
+    ? "home"
+    : pathname.startsWith("/evenements") || pathname === "/admin"
+      ? "all"
+      : "none";
+  const activeLoaders = useRef({ announcements: announcementScope, events: eventScope });
+  activeLoaders.current = { announcements: announcementScope, events: eventScope };
   const [articles, setArticles] = useState<AnnouncementItem[]>([]);
   const [newsConnection, setNewsConnection] = useState<Connection>(supabase ? "loading" : "error");
   const [newsError, setNewsError] = useState<string | null>(supabase ? null : "La connexion Supabase n’est pas configurée.");
@@ -36,10 +51,11 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const [eventConnection, setEventConnection] = useState<Connection>(supabase ? "loading" : "error");
   const [eventError, setEventError] = useState<string | null>(supabase ? null : "La connexion Supabase n’est pas configurée.");
 
-  const loadAnnouncements = useCallback(async () => {
+  const loadAnnouncements = useCallback(async (scope: Exclude<ContentLoadScope, "none">) => {
     if (!supabase) return;
     try {
-      const query = supabase.from("announcements").select("*").order("created_at", { ascending: false });
+      let query = supabase.from("announcements").select("*").order("created_at", { ascending: false });
+      if (scope === "home") query = query.limit(3);
       const timeout = new Promise<never>((_, reject) =>
         window.setTimeout(() => reject(new Error("timeout")), 10000),
       );
@@ -60,10 +76,17 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     }
   }, [supabase]);
 
-  const loadEvents = useCallback(async () => {
+  const loadEvents = useCallback(async (scope: Exclude<ContentLoadScope, "none">) => {
     if (!supabase) return;
     try {
-      const query = supabase.from("events").select("*").order("starts_at", { ascending: true });
+      let query = supabase.from("events").select("*").order("starts_at", { ascending: true });
+      if (scope === "home") {
+        query = query
+          .gte("starts_at", new Date().toISOString())
+          .neq("status", "draft")
+          .neq("status", "cancelled")
+          .limit(3);
+      }
       const timeout = new Promise<never>((_, reject) =>
         window.setTimeout(() => reject(new Error("timeout")), 10000),
       );
@@ -85,9 +108,15 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   }, [supabase]);
 
   useEffect(() => {
+    if (announcementScope !== "none") void loadAnnouncements(announcementScope);
+  }, [announcementScope, loadAnnouncements]);
+
+  useEffect(() => {
+    if (eventScope !== "none") void loadEvents(eventScope);
+  }, [eventScope, loadEvents]);
+
+  useEffect(() => {
     if (!supabase) return;
-    void loadAnnouncements();
-    void loadEvents();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
@@ -98,8 +127,12 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         event === "USER_UPDATED"
       ) {
         window.setTimeout(() => {
-          void loadAnnouncements();
-          void loadEvents();
+          if (activeLoaders.current.announcements !== "none") {
+            void loadAnnouncements(activeLoaders.current.announcements);
+          }
+          if (activeLoaders.current.events !== "none") {
+            void loadEvents(activeLoaders.current.events);
+          }
         }, 0);
       }
     });

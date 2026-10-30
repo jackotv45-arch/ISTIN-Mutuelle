@@ -102,7 +102,7 @@ export default async function EspaceSectionPage({
   return (
     <>
       <Header />
-      <div className="fixed bottom-5 right-5 z-40 sm:bottom-8 sm:right-8">
+      <div className="fixed bottom-[calc(68px+env(safe-area-inset-bottom))] right-5 z-40 sm:right-8 lg:bottom-8">
         <NotificationBell userId={user!.id} />
       </div>
       <main className="flex-1 pt-36 pb-16">

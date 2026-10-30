@@ -27,6 +27,11 @@ export function Header() {
 
   useEffect(() => setMounted(true), []);
 
+  useEffect(() => {
+    document.body.classList.add("has-mobile-bottom-nav");
+    return () => document.body.classList.remove("has-mobile-bottom-nav");
+  }, []);
+
   // Fermer avec la touche Échap et si on repasse en affichage bureau
   useEffect(() => {
     if (!mobileOpen) return;
@@ -92,7 +97,7 @@ export function Header() {
       active = false;
       subscription.unsubscribe();
     };
-  }, [pathname]);
+  }, []);
 
   const espaceHref = studentLoggedIn ? "/espace" : "/connexion";
   const espaceLabel = studentLoggedIn ? "Mon espace" : "Espace étudiant";
@@ -258,6 +263,38 @@ export function Header() {
       </div>,
       document.body,
     )}
+    <nav
+      aria-label="Navigation rapide"
+      className="fixed inset-x-0 bottom-0 z-[90] grid grid-cols-4 border-t border-[#e9ecef] bg-white/95 px-1 pt-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_18px_rgba(6,42,74,0.08)] backdrop-blur-lg lg:hidden"
+    >
+      {[
+        { href: "/", label: "Accueil", icon: "home" },
+        { href: "/actualites", label: "Actualités", icon: "news" },
+        { href: "/evenements", label: "Événements", icon: "events" },
+        { href: espaceHref, label: studentLoggedIn ? "Mon espace" : "Espace", icon: "student" },
+      ].map((item) => {
+        const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"));
+        return (
+          <Link
+            key={`${item.href}-${item.label}`}
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[10px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-istin-blue",
+              active ? "text-istin-blue" : "text-slate-500 hover:text-istin-blue",
+            )}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              {item.icon === "home" && <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" /></>}
+              {item.icon === "news" && <><path d="M5 4h14a1 1 0 0 1 1 1v14H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" /><path d="M7 8h10M7 12h10M7 16h6" /></>}
+              {item.icon === "events" && <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01" /></>}
+              {item.icon === "student" && <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>}
+            </svg>
+            <span className="max-w-full truncate">{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
     </>
   );
 }

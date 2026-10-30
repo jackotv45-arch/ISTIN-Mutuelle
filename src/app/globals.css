@@ -269,7 +269,7 @@ h4, h5 { font-family: var(--font-heading); font-weight: 700; }
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-main { animation: pageEnter .42s ease-out both; }
+main { animation: pageEnter .16s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   main { animation: none; }
 }
@@ -457,6 +457,11 @@ html body .datetime-field:focus {
 /* Visual refinement only: original brand palette, content and behavior retained. */
 html { scroll-padding-top: 88px; }
 body { letter-spacing: 0; }
+@media (max-width: 1023px) {
+  body.has-mobile-bottom-nav {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+}
 h1, h2, h3 { text-wrap: balance; }
 p { overflow-wrap: break-word; }
 .btn { min-height: 44px; justify-content: center; text-align: center; line-height: 1.4; }
