@@ -1,9 +1,9 @@
-/* ISTIN MUTUELLE — service worker (v3)
+/* ISTIN MUTUELLE — service worker (v4)
  * - Réseau d'abord pour les pages
  * - Cache des assets immuables Next
  * - Notifications push (si abonnement actif)
  */
-const CACHE = "istin-mutuelle-v3";
+const CACHE = "istin-mutuelle-v4";
 const OFFLINE_URLS = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -85,15 +85,20 @@ self.addEventListener("push", (event) => {
       /* ignore */
     }
   }
-  event.waitUntil(
-    self.registration.showNotification(payload.title || "ISTIN MUTUELLE", {
-      body: payload.body || "",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      data: { url: payload.url || "/espace/notifications" },
-      lang: "fr",
-    }),
-  );
+  const notification = self.registration.showNotification(payload.title || "ISTIN MUTUELLE", {
+    body: payload.body || "",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    data: { url: payload.url || "/espace/notifications" },
+    lang: "fr",
+  });
+  const appBadge = typeof self.navigator?.setAppBadge === "function"
+    ? self.navigator.setAppBadge().catch(() => {})
+    : Promise.resolve();
+  const refreshOpenApps = self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+    windows.forEach((client) => client.postMessage({ type: "notifications-changed" }));
+  });
+  event.waitUntil(Promise.all([notification, appBadge, refreshOpenApps]));
 });
 
 self.addEventListener("notificationclick", (event) => {

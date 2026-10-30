@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { isPushConfigured, subscribeToPush, unsubscribeFromPush } from "@/lib/push-client";
 
+function replayPendingWelcomePush() {
+  void fetch("/api/push/notify", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deliverPendingWelcome: true }),
+  }).catch(() => {});
+}
+
 export function EnablePushToggle({ userId }: { userId: string }) {
   const [supported, setSupported] = useState(false);
   const [configured, setConfigured] = useState(false);
@@ -20,10 +29,26 @@ export function EnablePushToggle({ userId }: { userId: string }) {
       "Notification" in window;
     setSupported(ok);
     if (!ok) return;
-    void navigator.serviceWorker.ready.then((reg) =>
-      reg.pushManager.getSubscription().then((sub) => setEnabled(Boolean(sub))),
-    );
-  }, []);
+    void navigator.serviceWorker.ready
+      .then(async (reg) => {
+        const subscription = await reg.pushManager.getSubscription();
+        if (!subscription) return false;
+        const supabase = createSupabaseBrowserClient();
+        if (!supabase) return false;
+        const { data } = await supabase
+          .from("push_subscriptions")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("endpoint", subscription.endpoint)
+          .maybeSingle();
+        return Boolean(data);
+      })
+      .then((isRegistered) => {
+        setEnabled(isRegistered);
+        if (isRegistered) replayPendingWelcomePush();
+      })
+      .catch(() => setEnabled(false));
+  }, [userId]);
 
   async function enable() {
     setBusy(true);
@@ -39,6 +64,7 @@ export function EnablePushToggle({ userId }: { userId: string }) {
     const p256dh = result.subscription.keys?.p256dh;
     const auth = result.subscription.keys?.auth;
     if (!supabase || !endpoint || !p256dh || !auth) {
+      await unsubscribeFromPush();
       setMessage("Abonnement navigateur OK, mais enregistrement serveur impossible.");
       setBusy(false);
       return;
@@ -56,21 +82,38 @@ export function EnablePushToggle({ userId }: { userId: string }) {
     );
     setBusy(false);
     if (error) {
+      await unsubscribeFromPush();
       setMessage("Active d’abord setup_push_subscriptions.sql dans Supabase. " + error.message);
       return;
     }
     setEnabled(true);
+    replayPendingWelcomePush();
     setMessage("Notifications push activées sur cet appareil.");
   }
 
   async function disable() {
     setBusy(true);
     setMessage("");
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) {
-      await supabase.from("push_subscriptions").delete().eq("user_id", userId);
+    const result = await unsubscribeFromPush();
+    if (result.error) {
+      setBusy(false);
+      setMessage(result.error);
+      return;
     }
-    await unsubscribeFromPush();
+    const supabase = createSupabaseBrowserClient();
+    if (supabase && result.endpoint) {
+      const { error } = await supabase
+        .from("push_subscriptions")
+        .delete()
+        .eq("user_id", userId)
+        .eq("endpoint", result.endpoint);
+      if (error) {
+        setEnabled(false);
+        setBusy(false);
+        setMessage("Alertes désactivées sur cet appareil, mais son abonnement n’a pas pu être supprimé du serveur.");
+        return;
+      }
+    }
     setEnabled(false);
     setBusy(false);
     setMessage("Notifications push désactivées sur cet appareil.");

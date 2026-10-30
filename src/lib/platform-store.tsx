@@ -6,7 +6,6 @@ import { mapAnnouncement, persistAnnouncementImage, slugForTitle } from "@/lib/s
 import { librevilleDateTimeToIso, mapEvent, type EventInput } from "@/lib/supabase/events";
 import type { AnnouncementItem, EventItem } from "@/lib/content-types";
 import { notifyAllStudents } from "@/lib/notifications";
-import { broadcastPush } from "@/lib/push-broadcast";
 
 export type ActionResult = { ok: boolean; message: string };
 type Connection = "loading" | "connected" | "error";
@@ -185,11 +184,6 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         type: "event_published",
         meta: { slug: mapped.slug },
       });
-      void broadcastPush({
-        title: "Nouvel événement",
-        body: mapped.title + " a été publié. Consulte l’agenda.",
-        url: "/evenements/" + mapped.slug,
-      });
     }
     return { ok: true, message: item.published ? "Événement publié et étudiants notifiés." : "Brouillon d’événement enregistré." };
   }, [supabase]);
@@ -220,11 +214,6 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         link: "/evenements/" + mapped.slug,
         type: "event_published",
         meta: { slug: mapped.slug },
-      });
-      void broadcastPush({
-        title: "Nouvel événement",
-        body: mapped.title + " a été publié. Consulte l’agenda.",
-        url: "/evenements/" + mapped.slug,
       });
     }
     return { ok: true, message: published ? "Événement publié et étudiants notifiés." : "Événement dépublié." };

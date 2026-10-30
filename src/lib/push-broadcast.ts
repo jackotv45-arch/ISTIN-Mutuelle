@@ -1,4 +1,4 @@
-/** Déclenche un envoi push côté serveur (no-op si non configuré). */
+/** Déclenche un envoi push via la route serveur authentifiée. */
 export async function broadcastPush(input: {
   title: string;
   body?: string;
@@ -6,16 +6,13 @@ export async function broadcastPush(input: {
   userId?: string;
 }) {
   try {
-    const secret = process.env.NEXT_PUBLIC_PUSH_ADMIN_SECRET;
-    // Ne pas exposer le vrai secret en public : uniquement si l'appel est fait depuis le serveur.
-    // Côté navigateur admin, on tente sans secret (route ouverte si PUSH_ADMIN_SECRET absent).
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
     await fetch("/api/push/notify", {
       method: "POST",
-      headers,
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
   } catch {
-    /* push optionnel */
+    /* Push optionnel; la notification in-app est déjà enregistrée. */
   }
 }

@@ -18,6 +18,7 @@ select
   to_regclass('public.albums') is not null as albums,
   to_regclass('public.media_items') is not null as media_items,
   to_regclass('public.notifications') is not null as notifications,
+  to_regclass('public.push_subscriptions') is not null as push_subscriptions,
   to_regclass('public.audit_logs') is not null as audit_logs,
   to_regclass('public.site_settings') is not null as site_settings,
   to_regclass('public.committee_members') is not null as committee_members;
@@ -54,7 +55,7 @@ where n.nspname = 'public'
     'profiles', 'user_roles', 'access_codes', 'announcements', 'events',
     'event_registrations', 'event_tickets', 'financial_accounts', 'financial_transactions',
     'suggestions', 'polls', 'albums', 'media_items', 'notifications', 'audit_logs',
-    'site_settings', 'committee_members'
+    'site_settings', 'committee_members', 'push_subscriptions'
   )
 order by c.relname;
 
@@ -67,10 +68,49 @@ select
   cmd
 from pg_policies
 where schemaname = 'public'
-  and tablename in ('announcements', 'events', 'site_settings', 'profiles', 'user_roles', 'access_codes')
+  and tablename in ('announcements', 'events', 'site_settings', 'profiles', 'user_roles', 'access_codes', 'push_subscriptions')
 order by tablename, policyname;
 
--- 6. Comptes administrateurs existants
+-- 6. Accès push, trigger de livraison et exécution du répartiteur de rappels
+select
+  to_regclass('public.push_subscriptions') is not null as push_table_exists,
+  case when to_regclass('public.push_subscriptions') is not null then
+    has_table_privilege('authenticated', 'public.push_subscriptions', 'SELECT')
+  else false end as authenticated_can_select_push_subscriptions,
+  case when to_regclass('public.push_subscriptions') is not null then
+    has_table_privilege('authenticated', 'public.push_subscriptions', 'INSERT')
+  else false end as authenticated_can_register_push_subscription,
+  case when to_regclass('public.push_subscriptions') is not null then
+    has_table_privilege('authenticated', 'public.push_subscriptions', 'UPDATE')
+  else false end as authenticated_can_update_push_subscription,
+  case when to_regclass('public.push_subscriptions') is not null then
+    has_table_privilege('service_role', 'public.push_subscriptions', 'SELECT')
+  else false end as service_role_can_select_push_subscriptions,
+  case when to_regclass('public.push_subscriptions') is not null then
+    has_table_privilege('service_role', 'public.push_subscriptions', 'DELETE')
+  else false end as service_role_can_clean_push_subscriptions,
+  exists (
+    select 1 from pg_trigger
+    where tgname = 'push_after_notification_insert'
+      and tgrelid = to_regclass('public.notifications')
+      and not tgisinternal
+  ) as notification_push_trigger_exists,
+  exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'notifications'
+      and column_name = 'push_sent_at'
+  ) as push_delivery_tracking_exists,
+  exists (select 1 from pg_extension where extname = 'pg_net') as pg_net_enabled,
+  to_regprocedure('public.dispatch_event_reminders()') is not null as reminder_function_exists,
+  case when to_regprocedure('public.dispatch_event_reminders()') is not null then
+    has_function_privilege('service_role', to_regprocedure('public.dispatch_event_reminders()'), 'EXECUTE')
+  else false end as service_role_can_run_reminders,
+  case when to_regprocedure('public.dispatch_event_reminders()') is not null then
+    not has_function_privilege('authenticated', to_regprocedure('public.dispatch_event_reminders()'), 'EXECUTE')
+  else false end as authenticated_cannot_run_reminders;
+
+-- 7. Comptes administrateurs existants
 select
   u.email,
   r.role,
@@ -80,13 +120,13 @@ join auth.users u on u.id = r.user_id
 where r.role in ('admin', 'superadmin')
 order by r.granted_at;
 
--- 7. Rubriques site_settings présentes
+-- 8. Rubriques site_settings présentes
 select key, updated_at
 from public.site_settings
 where key like 'admin.section.%' or key like 'site.%'
 order by key;
 
--- 8. Contenu publié (nombres uniquement)
+-- 9. Contenu publié (nombres uniquement)
 select
   (select count(*) from public.announcements where status = 'published') as published_news,
   (select count(*) from public.events where status = 'published') as published_events,

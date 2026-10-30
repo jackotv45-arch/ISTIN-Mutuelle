@@ -31,22 +31,37 @@ export async function subscribeToPush(): Promise<
       error: "Les notifications push ne sont pas encore configurées (clé VAPID manquante).",
     };
   }
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") {
-    return { ok: false, error: "Permission refusée. Tu peux l’activer dans les réglages du navigateur." };
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      return { ok: false, error: "Permission refusée. Tu peux l’activer dans les réglages du navigateur." };
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    const sub = existing ?? await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key),
+    });
+    return { ok: true, subscription: sub.toJSON() };
+  } catch {
+    return { ok: false, error: "Le navigateur n’a pas pu activer les notifications push." };
   }
-  const reg = await navigator.serviceWorker.ready;
-  const sub = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(key),
-  });
-  return { ok: true, subscription: sub.toJSON() };
 }
 
-export async function unsubscribeFromPush(): Promise<boolean> {
-  if (!("serviceWorker" in navigator)) return false;
-  const reg = await navigator.serviceWorker.ready;
-  const sub = await reg.pushManager.getSubscription();
-  if (!sub) return true;
-  return sub.unsubscribe();
+export async function unsubscribeFromPush(): Promise<{ endpoint: string | null; error?: string }> {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+    return { endpoint: null, error: "Service worker indisponible." };
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return { endpoint: null };
+    const endpoint = sub.endpoint;
+    const unsubscribed = await sub.unsubscribe();
+    return unsubscribed
+      ? { endpoint }
+      : { endpoint: null, error: "Le navigateur n’a pas pu désactiver cet abonnement." };
+  } catch {
+    return { endpoint: null, error: "Le navigateur n’a pas pu désactiver cet abonnement." };
+  }
 }

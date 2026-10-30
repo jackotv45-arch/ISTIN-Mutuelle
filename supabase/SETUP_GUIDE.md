@@ -100,7 +100,7 @@ Laisse vides ceux qui ne sont pas encore officiels. Les champs non vides apparai
 
 La connexion administrateur, les invitations étudiantes, les profils, les actualités et les événements utilisent Supabase. Les rubriques Bureau, Finances, Médias et Paramètres (coordonnées) lisent leurs contenus dans `site_settings`. Aucun contenu fictif n’est préchargé.
 
-Restent à développer : inscriptions aux événements, transactions financières traçables, propositions, sondages/votes, notifications, billets QR et journal d’audit.
+Les notifications in-app et push Web couvrent les actions administrateur (événements, actualités, sondages, demandes, propositions), les messages de bienvenue et les rappels SQL. Le script de phase 2 planifie les rappels chaque jour à 02:00 UTC. Restent à développer : inscriptions aux événements, transactions financières traçables et billets QR.
 
 ## Invitations administrateur
 Exécuter `setup_admin_invites.sql` après `setup_student_access.sql`.
@@ -108,3 +108,11 @@ Ensuite : Admin → Codes admin → générer un code → la personne s’inscri
 
 ## Profil, tickets, notifications, audit
 Exécuter `setup_platform_features.sql`.
+
+Pour les notifications complètes, exécuter ensuite dans cet ordre :
+
+1. `setup_notifications_phase1.sql`
+2. `setup_notifications_phase2.sql`
+3. `setup_push_subscriptions.sql`
+
+Déployer d’abord le site et configurer les clés VAPID, `SUPABASE_SERVICE_ROLE_KEY` et `PUSH_DISPATCH_SECRET` dans son environnement serveur. Activer `pg_cron` et `pg_net` dans Supabase, créer dans Vault `push_dispatch_url` (origine HTTPS du site) et `push_dispatch_secret` (même valeur que `PUSH_DISPATCH_SECRET`), puis exécuter `setup_push_subscriptions.sql`. Le script `setup_notifications_phase2.sql` planifie les rappels quotidiens à 02:00 UTC. L’étudiant active ensuite les notifications depuis `/espace/notifications` sur chaque appareil. Un message de bienvenue non lu est envoyé à la prochaine ouverture après activation.

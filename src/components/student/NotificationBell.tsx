@@ -4,6 +4,26 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
+type AppBadgeNavigator = Navigator & {
+  setAppBadge?: (contents?: number) => Promise<void>;
+  clearAppBadge?: () => Promise<void>;
+};
+
+async function syncAppBadge(count: number) {
+  const badgeNavigator = navigator as AppBadgeNavigator;
+  try {
+    if (count > 0) {
+      await badgeNavigator.setAppBadge?.(count);
+    } else if (badgeNavigator.clearAppBadge) {
+      await badgeNavigator.clearAppBadge();
+    } else {
+      await badgeNavigator.setAppBadge?.(0);
+    }
+  } catch {
+    // Le navigateur ou le système peut ne pas prendre en charge le badge d’application.
+  }
+}
+
 export function NotificationBell({ userId }: { userId: string }) {
   const [unread, setUnread] = useState(0);
 
@@ -15,13 +35,28 @@ export function NotificationBell({ userId }: { userId: string }) {
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("is_read", false);
-    if (!error && typeof count === "number") setUnread(count);
+    if (!error && typeof count === "number") {
+      setUnread(count);
+      void syncAppBadge(count);
+    }
   }, [userId]);
 
   useEffect(() => {
     void load();
     const timer = window.setInterval(() => void load(), 60000);
-    return () => window.clearInterval(timer);
+    const refresh = () => void load();
+    const onServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === "notifications-changed") void load();
+    };
+    window.addEventListener("focus", refresh);
+    window.addEventListener("istin-notifications-changed", refresh);
+    navigator.serviceWorker?.addEventListener("message", onServiceWorkerMessage);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("istin-notifications-changed", refresh);
+      navigator.serviceWorker?.removeEventListener("message", onServiceWorkerMessage);
+    };
   }, [load]);
 
   return (

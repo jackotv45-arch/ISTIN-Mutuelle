@@ -64,6 +64,7 @@ export function NotificationsPanel({ userId }: { userId: string }) {
     if (!supabase) return;
     await supabase.from("notifications").update({ is_read: true }).eq("id", id).eq("user_id", userId);
     setItems((current) => current.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+    window.dispatchEvent(new Event("istin-notifications-changed"));
   }
 
   async function markAllRead() {
@@ -71,6 +72,7 @@ export function NotificationsPanel({ userId }: { userId: string }) {
     if (!supabase) return;
     await supabase.from("notifications").update({ is_read: true }).eq("user_id", userId).eq("is_read", false);
     setItems((current) => current.map((n) => ({ ...n, is_read: true })));
+    window.dispatchEvent(new Event("istin-notifications-changed"));
   }
 
   if (loading) {

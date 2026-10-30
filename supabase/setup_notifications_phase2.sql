@@ -1,6 +1,5 @@
 -- ISTIN MUTUELLE — Notifications Phase 2 (rappels événements)
--- Exécuter après setup_notifications_phase1.sql
--- Appel manuel ou via cron Supabase : select public.dispatch_event_reminders();
+-- Exécuter après setup_notifications_phase1.sql. Planifie un passage quotidien à 02:00 UTC.
 
 begin;
 
@@ -8,7 +7,7 @@ create or replace function public.dispatch_event_reminders()
 returns integer
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_count integer := 0;
@@ -93,7 +92,14 @@ begin
 end;
 $$;
 
-revoke all on function public.dispatch_event_reminders() from public, anon;
-grant execute on function public.dispatch_event_reminders() to authenticated;
+revoke all on function public.dispatch_event_reminders() from public, anon, authenticated;
+grant execute on function public.dispatch_event_reminders() to service_role;
+
+create extension if not exists pg_cron;
+select cron.schedule(
+  'istin-event-reminders',
+  '0 2 * * *',
+  'select public.dispatch_event_reminders();'
+);
 
 commit;

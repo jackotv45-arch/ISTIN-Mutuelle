@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { broadcastPush } from "@/lib/push-broadcast";
 
 export type NotificationType =
   | "event_published"
@@ -35,6 +36,13 @@ export async function notifyAllStudents(
     p_type: input.type ?? "general",
     p_meta: input.meta ?? {},
   });
+  if (!error) {
+    void broadcastPush({
+      title: input.title,
+      body: input.body ?? "",
+      url: input.link ?? "/espace/notifications",
+    });
+  }
   return { ok: !error, error: error?.message ?? null };
 }
 
@@ -57,6 +65,14 @@ export async function notifyUser(
     p_type: input.type ?? "general",
     p_meta: input.meta ?? {},
   });
+  if (!error) {
+    void broadcastPush({
+      title: input.title,
+      body: input.body ?? "",
+      url: input.link ?? "/espace/notifications",
+      userId: input.userId,
+    });
+  }
   return { ok: !error, error: error?.message ?? null };
 }
 

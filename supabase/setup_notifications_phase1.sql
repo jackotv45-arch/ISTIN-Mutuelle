@@ -22,7 +22,7 @@ create or replace function public.notify_user(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_id uuid;
@@ -56,7 +56,7 @@ create or replace function public.notify_all_students(
 returns integer
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_count integer;
@@ -90,7 +90,7 @@ create or replace function public.notify_all_students(
 returns integer
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   return public.notify_all_students(p_title, p_body, p_link, 'general', '{}'::jsonb);
