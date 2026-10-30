@@ -4,7 +4,7 @@ import { IstinLogo } from "@/components/ui/IstinLogo";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -19,6 +19,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [studentLoggedIn, setStudentLoggedIn] = useState(false);
@@ -95,6 +96,25 @@ export function Header() {
 
   const espaceHref = studentLoggedIn ? "/espace" : "/connexion";
   const espaceLabel = studentLoggedIn ? "Mon espace" : "Espace étudiant";
+  const backFallback = pathname.startsWith("/espace/")
+    ? "/espace"
+    : pathname.startsWith("/actualites/")
+      ? "/actualites"
+      : pathname.startsWith("/evenements/")
+        ? "/evenements"
+        : pathname.startsWith("/galerie/")
+          ? "/galerie"
+          : pathname === "/inscription" || pathname.startsWith("/mot-de-passe")
+            ? "/connexion"
+            : "/";
+
+  const goBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push(backFallback);
+  };
 
   return (
     <>
@@ -106,6 +126,20 @@ export function Header() {
         )}
       >
         <div className="mx-auto flex h-[64px] max-w-[1200px] items-center justify-between gap-3 px-4 sm:h-[72px] sm:px-6">
+          {pathname !== "/" && (
+            <button
+              type="button"
+              onClick={goBack}
+              aria-label="Retour"
+              title="Retour"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#0b63ab] transition-colors hover:bg-[#eef5fb] lg:hidden"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M19 12H5" />
+                <path d="m12 19-7-7 7-7" />
+              </svg>
+            </button>
+          )}
           <Link href="/" className="relative z-[110] flex shrink-0 items-center" aria-label="Accueil ISTIN Mutuelle">
             <IstinLogo className="h-9 sm:h-11" />
           </Link>
