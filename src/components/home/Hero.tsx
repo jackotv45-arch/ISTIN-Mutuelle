@@ -5,9 +5,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const TITLE = "MUTUELLE";
+const TYPEWRITER_TEXT = "ensemble.";
 
 export function Hero() {
   const [ready, setReady] = useState(false);
+  const [typedText, setTypedText] = useState(TYPEWRITER_TEXT);
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -15,12 +17,26 @@ export function Hero() {
       setReady(true);
       return;
     }
+    let interval: number | undefined;
     const frame = requestAnimationFrame(() => setReady(true));
-    // Filet de sécurité iOS : afficher le texte même si l’animation échoue
-    const fallback = window.setTimeout(() => setReady(true), 400);
+    const typingStart = window.setTimeout(() => {
+      let index = 0;
+      setTypedText("");
+      interval = window.setInterval(() => {
+        index += 1;
+        setTypedText(TYPEWRITER_TEXT.slice(0, index));
+        if (index >= TYPEWRITER_TEXT.length && interval !== undefined) {
+          window.clearInterval(interval);
+        }
+      }, 55);
+    }, 720);
+    // Filet de sécurité iOS : le texte reste complet si la frappe n'aboutit pas.
+    const fallback = window.setTimeout(() => setTypedText(TYPEWRITER_TEXT), 1800);
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(typingStart);
       window.clearTimeout(fallback);
+      if (interval !== undefined) window.clearInterval(interval);
     };
   }, []);
 
@@ -74,7 +90,12 @@ export function Hero() {
               (ready ? "hero-fade hero-fade-d1" : "hero-pending")
             }
           >
-            La vie étudiante, <span className="text-[#ce283c]">ensemble.</span>
+            La vie étudiante,{" "}
+            <span className="sr-only">ensemble.</span>
+            <span className="text-[#ce283c] hero-typewriter" aria-hidden="true">
+              <span className="hero-typewriter-measure">{TYPEWRITER_TEXT}</span>
+              <span className="hero-typewriter-text">{typedText || "\u00a0"}</span>
+            </span>
           </p>
 
           <p

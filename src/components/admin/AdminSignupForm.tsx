@@ -50,9 +50,18 @@ export function AdminSignupForm() {
     if (signUpError) {
       setBusy(false);
       const msg = signUpError.message || "";
-      if (msg.includes("Code") || msg.includes("invalide") || msg.includes("utilisé")) {
+      const normalizedMsg = msg.toLowerCase();
+      if (normalizedMsg.includes("database error saving new user")) {
+        setError(
+          "Le code administrateur est invalide, expiré ou a atteint sa limite d’utilisations. Demande à un administrateur de générer un nouveau code.",
+        );
+      } else if (
+        normalizedMsg.includes("code") ||
+        normalizedMsg.includes("invalide") ||
+        normalizedMsg.includes("utilisé")
+      ) {
         setError("Code administrateur invalide, expiré ou déjà utilisé.");
-      } else if (msg.toLowerCase().includes("already") || msg.toLowerCase().includes("registered")) {
+      } else if (normalizedMsg.includes("already") || normalizedMsg.includes("registered")) {
         setError("Un compte existe déjà avec cet e-mail. Connecte-toi puis active un code si besoin.");
       } else {
         setError(msg || "Impossible de créer le compte administrateur.");
@@ -63,6 +72,14 @@ export function AdminSignupForm() {
     if (!data.user) {
       setBusy(false);
       setError("Création du compte incomplète. Réessaie.");
+      return;
+    }
+
+    if (!data.session) {
+      setBusy(false);
+      setNotice(
+        "Compte créé. Vérifie ta boîte mail et clique sur le lien de confirmation avant de te connecter à l’administration.",
+      );
       return;
     }
 
