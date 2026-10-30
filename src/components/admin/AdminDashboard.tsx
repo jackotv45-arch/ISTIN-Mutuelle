@@ -13,14 +13,16 @@ import { AdminAuditPanel } from "@/components/admin/AdminAuditPanel";
 import { AdminEditableSectionPanel } from "@/components/admin/AdminEditableSectionPanel";
 import { AdminProposalsPanel } from "@/components/admin/AdminProposalsPanel";
 import { AdminPollsPanel } from "@/components/admin/AdminPollsPanel";
+import { AdminRegistrationsPanel } from "@/components/admin/AdminRegistrationsPanel";
+import { AdminPollResultsPanel } from "@/components/admin/AdminPollResultsPanel";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { EditableSectionKey } from "@/lib/admin-sections";
 
-type Tab = "Vue d’ensemble" | "Contenus" | "Événements" | "Codes étudiants" | "Codes admin" | "Finances" | "Inscriptions" | "Propositions" | "Sondages" | "Médias" | "Bureau" | "Rapports" | "Demandes" | "Journal" | "Paramètres";
-const nav: Tab[] = ["Vue d’ensemble", "Contenus", "Événements", "Codes étudiants", "Codes admin", "Finances", "Inscriptions", "Propositions", "Sondages", "Médias", "Bureau", "Rapports", "Demandes", "Journal", "Paramètres"];
+type Tab = "Vue d’ensemble" | "Contenus" | "Événements" | "Inscriptions événements" | "Codes étudiants" | "Codes admin" | "Finances" | "Rubrique inscriptions" | "Propositions" | "Sondages" | "Résultats sondages" | "Médias" | "Bureau" | "Rapports" | "Demandes" | "Journal" | "Paramètres";
+const nav: Tab[] = ["Vue d’ensemble", "Contenus", "Événements", "Inscriptions événements", "Codes étudiants", "Codes admin", "Finances", "Rubrique inscriptions", "Propositions", "Sondages", "Résultats sondages", "Médias", "Bureau", "Rapports", "Demandes", "Journal", "Paramètres"];
 const sectionForTab: Partial<Record<Tab, EditableSectionKey>> = {
   Finances: "finances",
-  Inscriptions: "inscriptions",
+  "Rubrique inscriptions": "inscriptions",
   Médias: "medias",
   Bureau: "bureau",
   Rapports: "rapports",
@@ -71,14 +73,20 @@ export function AdminDashboard({ adminEmail }: { adminEmail?: string }) {
             <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><h2 className="font-heading text-lg font-bold">Accès étudiants</h2><p className="mt-1 max-w-2xl text-sm text-muted-foreground">Génère des codes d’invitation dans « Codes étudiants ». Un étudiant utilise son code pour créer son compte avec son propre e-mail et son mot de passe.</p><button type="button" onClick={() => setTab("Codes étudiants")} className="btn btn-primary mt-4">Gérer les invitations</button></div>
             <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><h2 className="font-heading text-lg font-bold">Accès administrateurs</h2><p className="mt-1 max-w-2xl text-sm text-muted-foreground">Génère un code unique dans « Codes admin », puis donne-le à la personne qui créera son compte administrateur.</p><button type="button" onClick={() => setTab("Codes admin")} className="btn btn-primary mt-4">Gérer les codes admin</button></div>
           </div>
-          <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><h2 className="font-heading text-lg font-bold">Rubriques éditables</h2><p className="mt-1 text-sm text-muted-foreground">Consulte et modifie les informations enregistrées pour chaque rubrique.</p><div className="mt-4 flex flex-wrap gap-2">{nav.slice(4).map((item) => <button key={item} type="button" onClick={() => setTab(item)} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-istin-blue hover:text-istin-blue">{item}</button>)}</div></div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><h2 className="font-heading text-lg font-bold">Inscriptions aux événements</h2><p className="mt-1 text-sm text-muted-foreground">Consulte les participants, leurs coordonnées et les totaux par événement.</p><button type="button" onClick={() => setTab("Inscriptions événements")} className="btn btn-primary mt-4">Voir les inscrits</button></div>
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><h2 className="font-heading text-lg font-bold">Résultats des sondages</h2><p className="mt-1 text-sm text-muted-foreground">Compare les réponses, les nombres de votes et les pourcentages.</p><button type="button" onClick={() => setTab("Résultats sondages")} className="btn btn-primary mt-4">Consulter les résultats</button></div>
+          </div>
+          <div className="rounded-2xl border border-border bg-white p-5 shadow-sm"><h2 className="font-heading text-lg font-bold">Rubriques éditables</h2><p className="mt-1 text-sm text-muted-foreground">Consulte et modifie les informations enregistrées pour chaque rubrique.</p><div className="mt-4 flex flex-wrap gap-2">{(["Finances", "Rubrique inscriptions", "Médias", "Bureau", "Rapports", "Paramètres"] as Tab[]).map((item) => <button key={item} type="button" onClick={() => setTab(item)} className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-istin-blue hover:text-istin-blue">{item}</button>)}</div></div>
         </section>}
         {tab === "Contenus" && <AdminContentPanel />}
         {tab === "Événements" && <AdminEventsPanel />}
+        {tab === "Inscriptions événements" && <AdminRegistrationsPanel />}
         {tab === "Codes étudiants" && <AdminAccessCodesPanel />}
         {tab === "Codes admin" && <AdminInviteCodesPanel />}
         {tab === "Propositions" && <AdminProposalsPanel />}
         {tab === "Sondages" && <AdminPollsPanel />}
+        {tab === "Résultats sondages" && <AdminPollResultsPanel />}
         {editableSection && tab !== "Demandes" && tab !== "Journal" && <AdminEditableSectionPanel key={editableSection} section={editableSection} />}
         {tab === "Demandes" && <AdminTicketsPanel />}
         {tab === "Journal" && <AdminAuditPanel />}
