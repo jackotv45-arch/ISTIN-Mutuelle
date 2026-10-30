@@ -31,8 +31,8 @@ export function EventSignup({ eventId, eventSlug, enabled }: { eventId?: string;
     }
 
     let active = true;
-    async function loadRegistration() {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+    async function loadRegistration(client: NonNullable<typeof supabase>) {
+      const { data: { user }, error: authError } = await client.auth.getUser();
       if (!active) return;
       if (authError) {
         setPhase("error");
@@ -45,7 +45,7 @@ export function EventSignup({ eventId, eventSlug, enabled }: { eventId?: string;
       }
 
       setUserId(user.id);
-      const { data: roles, error: roleError } = await supabase
+      const { data: roles, error: roleError } = await client
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
@@ -62,7 +62,7 @@ export function EventSignup({ eventId, eventSlug, enabled }: { eventId?: string;
         return;
       }
 
-      const { data: registration, error: registrationError } = await supabase
+      const { data: registration, error: registrationError } = await client
         .from("event_registrations")
         .select("id")
         .eq("event_id", eventId)
@@ -77,7 +77,7 @@ export function EventSignup({ eventId, eventSlug, enabled }: { eventId?: string;
       setPhase(registration ? "registered" : "open");
     }
 
-    void loadRegistration();
+    void loadRegistration(supabase);
     return () => {
       active = false;
     };
