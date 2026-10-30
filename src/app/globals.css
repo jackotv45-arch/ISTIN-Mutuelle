@@ -435,15 +435,6 @@ html body .datetime-field:focus {
 .istin-calendar-day.is-selected { background: #0b63ab; color: #fff; box-shadow: 0 4px 12px rgba(11,99,171,.35); }
 @keyframes istinPop { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
 
-/* mobile reveal safety */
-@media (max-width: 768px) {
-  .motion-ready .reveal:not(.is-visible) {
-    opacity: 1;
-    transform: none;
-    filter: none;
-  }
-}
-
 /* hero mobile safety: texte toujours visible */
 @media (max-width: 1023px) {
   .h-letter, .h-letter.drop, .hero-fade, .hero-pending, .fade-up {
@@ -452,7 +443,15 @@ html body .datetime-field:focus {
     transform: none !important;
   }
   .hero-red-line, .hero-red-line.draw { animation: none !important; transform: scaleX(1) !important; }
-  .reveal, .reveal-item { opacity: 1 !important; transform: none !important; filter: none !important; }
+}
+
+@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+  .motion-ready .reveal:not(.is-visible) {
+    transform: translateY(12px);
+    filter: none;
+  }
+  .reveal { transition-duration: .45s; }
+  .reveal-delay-1 { transition-delay: .06s; }
 }
 
 /* Visual refinement only: original brand palette, content and behavior retained. */
