@@ -95,7 +95,7 @@ export function Hero() {
             <Link href="/evenements" className="btn btn-primary justify-center">
               Découvrir les événements
             </Link>
-            <Link href="/connexion" className="btn btn-outline-light justify-center">
+            <Link href="/espace" className="btn btn-outline-light justify-center">
               Espace étudiant
             </Link>
           </div>
