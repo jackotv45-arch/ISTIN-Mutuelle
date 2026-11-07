@@ -29,6 +29,27 @@ type PlatformStore = {
 };
 const PlatformContext = createContext<PlatformStore | null>(null);
 
+const ANNOUNCEMENT_COLUMNS = "slug,title,excerpt,body,category,author_label,cover_url,status,published_at,created_at";
+const HOME_ANNOUNCEMENT_COLUMNS = "slug,title,excerpt,category,cover_url,status,published_at,created_at";
+const EVENT_COLUMNS = "id,slug,title,description,body,cover_url,starts_at,location,organizer,practical_info,registration_enabled,status";
+const HOME_EVENT_COLUMNS = "id,slug,title,description,cover_url,starts_at,location,status";
+
+async function withRequestTimeout<T>(request: { abortSignal: (signal: AbortSignal) => PromiseLike<T> }): Promise<T> {
+  const controller = new AbortController();
+  let timer: number | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = window.setTimeout(() => {
+      controller.abort();
+      reject(new Error("timeout"));
+    }, 3000);
+  });
+  try {
+    return await Promise.race([request.abortSignal(controller.signal), timeout]);
+  } finally {
+    if (timer !== undefined) window.clearTimeout(timer);
+  }
+}
+
 export function PlatformProvider({ children }: { children: ReactNode }) {
   const supabase = createSupabaseBrowserClient();
   const pathname = usePathname();
@@ -54,12 +75,11 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const loadAnnouncements = useCallback(async (scope: Exclude<ContentLoadScope, "none">) => {
     if (!supabase) return;
     try {
-      let query = supabase.from("announcements").select("*").order("created_at", { ascending: false });
+      let query = scope === "home"
+        ? supabase.from("announcements").select(HOME_ANNOUNCEMENT_COLUMNS).order("created_at", { ascending: false })
+        : supabase.from("announcements").select(ANNOUNCEMENT_COLUMNS).order("created_at", { ascending: false });
       if (scope === "home") query = query.limit(3);
-      const timeout = new Promise<never>((_, reject) =>
-        window.setTimeout(() => reject(new Error("timeout")), 10000),
-      );
-      const { data, error } = await Promise.race([query, timeout]) as Awaited<typeof query>;
+      const { data, error } = await withRequestTimeout(query);
       if (error) {
         setArticles([]);
         setNewsConnection("error");
@@ -79,7 +99,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const loadEvents = useCallback(async (scope: Exclude<ContentLoadScope, "none">) => {
     if (!supabase) return;
     try {
-      let query = supabase.from("events").select("*").order("starts_at", { ascending: true });
+      let query = scope === "home"
+        ? supabase.from("events").select(HOME_EVENT_COLUMNS).order("starts_at", { ascending: true })
+        : supabase.from("events").select(EVENT_COLUMNS).order("starts_at", { ascending: true });
       if (scope === "home") {
         query = query
           .gte("starts_at", new Date().toISOString())
@@ -87,10 +109,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
           .neq("status", "cancelled")
           .limit(3);
       }
-      const timeout = new Promise<never>((_, reject) =>
-        window.setTimeout(() => reject(new Error("timeout")), 10000),
-      );
-      const { data, error } = await Promise.race([query, timeout]) as Awaited<typeof query>;
+      const { data, error } = await withRequestTimeout(query);
       if (error) {
         setEvents([]);
         setEventConnection("error");
@@ -149,7 +168,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       slug: slugForTitle(item.title), title: item.title, excerpt: item.excerpt, body: item.content,
       category: item.category, author_label: "ISTIN MUTUELLE", cover_url: image.url,
       status: published ? "published" : "draft", published_at: published ? new Date().toISOString() : null, created_by: user.id,
-    }).select("*").single();
+    }).select(ANNOUNCEMENT_COLUMNS).single();
     if (error || !data) return { ok: false, message: "Enregistrement refusé. Vérifie les règles Supabase et les droits du compte administrateur." };
     setArticles((current) => [mapAnnouncement(data as Parameters<typeof mapAnnouncement>[0]), ...current]);
     return { ok: true, message: published ? "Actualité enregistrée et publiée." : "Brouillon enregistré." };
@@ -162,7 +181,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.from("announcements").update({
       title: item.title, excerpt: item.excerpt, body: item.content, category: item.category, cover_url: image.url,
       status: published ? "published" : "draft", published_at: published ? new Date().toISOString() : null,
-    }).eq("slug", slug).select("*").maybeSingle();
+    }).eq("slug", slug).select(ANNOUNCEMENT_COLUMNS).maybeSingle();
     if (error || !data) return { ok: false, message: "Modification refusée par Supabase." };
     setArticles((current) => current.map((article) => article.slug === slug ? mapAnnouncement(data as Parameters<typeof mapAnnouncement>[0]) : article));
     return { ok: true, message: "Actualité mise à jour." };
@@ -170,7 +189,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   const setAnnouncementPublished = useCallback(async (slug: string, published: boolean, notifyStudents = false): Promise<ActionResult> => {
     if (!supabase) return { ok: false, message: "La connexion Supabase n’est pas configurée." };
-    const { data, error } = await supabase.from("announcements").update({ status: published ? "published" : "draft", published_at: published ? new Date().toISOString() : null }).eq("slug", slug).select("*").maybeSingle();
+    const { data, error } = await supabase.from("announcements").update({ status: published ? "published" : "draft", published_at: published ? new Date().toISOString() : null }).eq("slug", slug).select(ANNOUNCEMENT_COLUMNS).maybeSingle();
     if (error || !data) return { ok: false, message: "Changement de statut refusé par Supabase." };
     setArticles((current) => current.map((article) => article.slug === slug ? mapAnnouncement(data as Parameters<typeof mapAnnouncement>[0]) : article));
     if (published && notifyStudents) {
@@ -206,7 +225,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       starts_at: startsAt, location: item.location || null, organizer: item.organizer || null,
       practical_info: item.practicalInfo, registration_enabled: item.registrationEnabled,
       status: item.published ? "published" : "draft", created_by: user.id,
-    }).select("*").single();
+    }).select(EVENT_COLUMNS).single();
     if (error || !data) return { ok: false, message: "Événement non enregistré. Vérifie les règles Supabase." };
     const mapped = mapEvent(data as Parameters<typeof mapEvent>[0]);
     setEvents((current) => [...current, mapped].sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt)));
@@ -230,7 +249,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       title: item.title, description: item.description, body: item.content, cover_url: image.url, starts_at: librevilleDateTimeToIso(item.startAt),
       location: item.location || null, organizer: item.organizer || null, practical_info: item.practicalInfo,
       registration_enabled: item.registrationEnabled, status: item.published ? "published" : "draft",
-    }).eq("slug", slug).select("*").maybeSingle();
+    }).eq("slug", slug).select(EVENT_COLUMNS).maybeSingle();
     if (error || !data) return { ok: false, message: "Modification refusée par Supabase." };
     setEvents((current) => current.map((event) => event.slug === slug ? mapEvent(data as Parameters<typeof mapEvent>[0]) : event).sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt)));
     return { ok: true, message: "Événement mis à jour." };
@@ -238,7 +257,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   const setEventPublished = useCallback(async (slug: string, published: boolean): Promise<ActionResult> => {
     if (!supabase) return { ok: false, message: "La connexion Supabase n’est pas configurée." };
-    const { data, error } = await supabase.from("events").update({ status: published ? "published" : "draft" }).eq("slug", slug).select("*").maybeSingle();
+    const { data, error } = await supabase.from("events").update({ status: published ? "published" : "draft" }).eq("slug", slug).select(EVENT_COLUMNS).maybeSingle();
     if (error || !data) return { ok: false, message: "Changement de statut refusé par Supabase." };
     const mapped = mapEvent(data as Parameters<typeof mapEvent>[0]);
     setEvents((current) => current.map((event) => event.slug === slug ? mapped : event));

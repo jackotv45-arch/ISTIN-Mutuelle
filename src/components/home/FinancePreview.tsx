@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { getEditableSection } from "@/lib/site-settings";
+import { getHomeEditableSections } from "@/lib/site-settings";
 
 export async function FinancePreview() {
-  const finance = await getEditableSection("finances");
+  const { finances: finance } = await getHomeEditableSections();
   return (
     <section className="section relative overflow-hidden bg-istin-blue-deeper text-background">
       <div className="container-main relative z-10">

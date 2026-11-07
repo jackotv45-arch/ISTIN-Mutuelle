@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getEditableSection } from "@/lib/site-settings";
+import { getHomeEditableSections } from "@/lib/site-settings";
 
 export async function GalleryPreview() {
-  const section = await getEditableSection("medias");
+  const { medias: section } = await getHomeEditableSections();
   const photos = section.items.filter((item) => item.image).slice(0, 4);
   return <section className="section bg-background"><div className="container-main">
     <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="mb-2 text-sm font-semibold uppercase tracking-wider text-istin-blue">Vie étudiante</p><h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">Galerie photos</h2></div><Link href="/galerie" className="text-sm font-semibold text-istin-blue hover:text-istin-blue-dark">Toutes les photos →</Link></div>

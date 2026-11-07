@@ -10,12 +10,12 @@ type EventRow = {
   slug: string;
   title: string;
   description: string | null;
-  body: string | null;
+  body?: string | null;
   cover_url: string | null;
   starts_at: string;
   location: string | null;
-  organizer: string | null;
-  practical_info: string[] | null;
+  organizer?: string | null;
+  practical_info?: string[] | null;
   registration_enabled?: boolean | null;
   status: "draft" | "published" | "full" | "ended" | "cancelled";
 };

@@ -1,22 +1,30 @@
 "use client";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 
 import { useState } from "react";
 import Link from "next/link";
 import { usePlatform } from "@/lib/platform-store";
-import { AdminContentPanel } from "@/components/admin/AdminContentPanel";
-import { AdminEventsPanel } from "@/components/admin/AdminEventsPanel";
-import { AdminAccessCodesPanel } from "@/components/admin/AdminAccessCodesPanel";
-import { AdminInviteCodesPanel } from "@/components/admin/AdminInviteCodesPanel";
-import { AdminTicketsPanel } from "@/components/admin/AdminTicketsPanel";
-import { AdminAuditPanel } from "@/components/admin/AdminAuditPanel";
-import { AdminEditableSectionPanel } from "@/components/admin/AdminEditableSectionPanel";
-import { AdminProposalsPanel } from "@/components/admin/AdminProposalsPanel";
-import { AdminPollsPanel } from "@/components/admin/AdminPollsPanel";
-import { AdminRegistrationsPanel } from "@/components/admin/AdminRegistrationsPanel";
-import { AdminPollResultsPanel } from "@/components/admin/AdminPollResultsPanel";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { EditableSectionKey } from "@/lib/admin-sections";
+
+const PanelLoading = () => (
+  <div role="status" aria-live="polite" className="rounded-2xl border border-border bg-white p-6 text-sm text-muted-foreground">
+    Chargement du panneau…
+  </div>
+);
+
+const AdminContentPanel = dynamic(() => import("@/components/admin/AdminContentPanel").then((module) => module.AdminContentPanel), { loading: PanelLoading });
+const AdminEventsPanel = dynamic(() => import("@/components/admin/AdminEventsPanel").then((module) => module.AdminEventsPanel), { loading: PanelLoading });
+const AdminAccessCodesPanel = dynamic(() => import("@/components/admin/AdminAccessCodesPanel").then((module) => module.AdminAccessCodesPanel), { loading: PanelLoading });
+const AdminInviteCodesPanel = dynamic(() => import("@/components/admin/AdminInviteCodesPanel").then((module) => module.AdminInviteCodesPanel), { loading: PanelLoading });
+const AdminTicketsPanel = dynamic(() => import("@/components/admin/AdminTicketsPanel").then((module) => module.AdminTicketsPanel), { loading: PanelLoading });
+const AdminAuditPanel = dynamic(() => import("@/components/admin/AdminAuditPanel").then((module) => module.AdminAuditPanel), { loading: PanelLoading });
+const AdminEditableSectionPanel = dynamic(() => import("@/components/admin/AdminEditableSectionPanel").then((module) => module.AdminEditableSectionPanel), { loading: PanelLoading });
+const AdminProposalsPanel = dynamic(() => import("@/components/admin/AdminProposalsPanel").then((module) => module.AdminProposalsPanel), { loading: PanelLoading });
+const AdminPollsPanel = dynamic(() => import("@/components/admin/AdminPollsPanel").then((module) => module.AdminPollsPanel), { loading: PanelLoading });
+const AdminRegistrationsPanel = dynamic(() => import("@/components/admin/AdminRegistrationsPanel").then((module) => module.AdminRegistrationsPanel), { loading: PanelLoading });
+const AdminPollResultsPanel = dynamic(() => import("@/components/admin/AdminPollResultsPanel").then((module) => module.AdminPollResultsPanel), { loading: PanelLoading });
 
 type Tab = "Vue d’ensemble" | "Contenus" | "Événements" | "Inscriptions événements" | "Codes étudiants" | "Codes admin" | "Finances" | "Rubrique inscriptions" | "Propositions" | "Sondages" | "Résultats sondages" | "Médias" | "Bureau" | "Rapports" | "Demandes" | "Journal" | "Paramètres";
 const nav: Tab[] = ["Vue d’ensemble", "Contenus", "Événements", "Inscriptions événements", "Codes étudiants", "Codes admin", "Finances", "Rubrique inscriptions", "Propositions", "Sondages", "Résultats sondages", "Médias", "Bureau", "Rapports", "Demandes", "Journal", "Paramètres"];

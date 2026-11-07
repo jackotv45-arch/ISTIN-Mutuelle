@@ -21,7 +21,7 @@ Les inscriptions réelles aux événements, transactions financières, votes, pr
 
 ## Configuration locale
 
-1. Renseigne `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` dans `.env.local`.
+1. Copie `.env.example` vers `.env.local`, puis renseigne `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Les variables VAPID et `SUPABASE_SERVICE_ROLE_KEY` ne sont nécessaires que pour les fonctions serveur qui les utilisent; garde leurs valeurs privées.
 2. Applique les scripts SQL dans l’ordre de `supabase/SETUP_GUIDE.md`. Si les scripts de base, d’actualités et d’événements sont déjà appliqués, exécute dans l’ordre :
    - `setup_student_access.sql`
    - `setup_admin_sections.sql`

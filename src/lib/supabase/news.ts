@@ -7,9 +7,9 @@ type AnnouncementRow = {
   slug: string;
   title: string;
   excerpt: string | null;
-  body: string;
+  body?: string | null;
   category: string | null;
-  author_label: string | null;
+  author_label?: string | null;
   cover_url: string | null;
   status: "draft" | "published" | "archived";
   published_at: string | null;
@@ -28,7 +28,7 @@ export function mapAnnouncement(row: AnnouncementRow): AnnouncementItem {
     slug: row.slug,
     title: row.title,
     excerpt: row.excerpt ?? "",
-    content: row.body,
+    content: row.body ?? "",
     category: row.category ?? "Information",
     date: Number.isNaN(date.getTime())
       ? "Date à confirmer"
@@ -81,7 +81,7 @@ export async function persistAnnouncementImage(
   const path = `${crypto.randomUUID()}.${extension}`;
   const { error } = await supabase.storage.from(NEWS_IMAGE_BUCKET).upload(path, bytes, {
     contentType: mimeType,
-    cacheControl: "3600",
+    cacheControl: "31536000",
     upsert: false,
   });
   if (error) return { ok: false, error: "Envoi de l’image refusé. Vérifie le bucket et les droits administrateur." };

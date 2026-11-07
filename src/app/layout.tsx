@@ -8,7 +8,7 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import "./globals.css";
 
 const montserrat = localFont({
-  src: "./fonts/montserrat-variable.ttf",
+  src: "./fonts/montserrat-variable.woff2",
   variable: "--font-montserrat",
   weight: "100 900",
   display: "swap",

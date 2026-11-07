@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePlatform } from "@/lib/platform-store";
@@ -14,7 +14,13 @@ function useCountdown(target: string) {
 
 export function NextEvent() {
   const { events, eventConnection, eventError } = usePlatform();
-  const next = [...events].filter((event) => event.published !== false && event.statusLabel !== "ANNULÉ" && Date.parse(event.startAt) > Date.now()).sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))[0];
+  const orderedEvents = useMemo(
+    () => [...events].sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt)),
+    [events],
+  );
+  const next = orderedEvents.find(
+    (event) => event.published !== false && event.statusLabel !== "ANNULÉ" && Date.parse(event.startAt) > Date.now(),
+  );
   const time = useCountdown(next?.startAt ?? new Date().toISOString());
   if (!next) return <section className="section bg-muted/50"><div className="container-main"><div className="agenda-empty mx-auto max-w-2xl py-4 text-center"><p className="text-sm font-semibold uppercase tracking-normal text-istin-red">Agenda ISTIN MUTUELLE</p><h2 className="mt-2 font-heading text-2xl font-bold text-foreground">Prochain rendez-vous</h2><p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">{eventConnection === "loading" ? "Chargement des événements publiés…" : eventConnection === "error" ? eventError : "Aucun événement publié à venir pour le moment."}</p><Link href="/evenements" className="btn btn-outline mt-6 justify-center">Voir l’agenda</Link></div></div></section>;
   return <section className="section bg-muted/50"><div className="container-main"><div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">

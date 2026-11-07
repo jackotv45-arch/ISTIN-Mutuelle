@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { getEditableSection } from "@/lib/site-settings";
+import { getHomeEditableSections } from "@/lib/site-settings";
 import { CommitteeCard } from "@/components/ui/CommitteeCard";
 
 export async function BureauPreview() {
-  const section = await getEditableSection("bureau");
+  const { bureau: section } = await getHomeEditableSections();
   return <section className="section relative isolate overflow-hidden bg-[#f4f7fb]">
     <div className="pointer-events-none absolute -right-24 -top-32 -z-10 h-80 w-80 rounded-full bg-istin-blue/10 blur-3xl" />
     <div className="pointer-events-none absolute -bottom-36 -left-24 -z-10 h-80 w-80 rounded-full bg-istin-red/10 blur-3xl" />
