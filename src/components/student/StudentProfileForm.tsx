@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { persistAnnouncementImage } from "@/lib/supabase/news";
+import { uploadStudentAvatar, STUDENT_AVATAR_BUCKET } from "@/lib/supabase/avatars";
 
 export function StudentProfileForm({
   userId,
@@ -12,6 +12,7 @@ export function StudentProfileForm({
   initialProgram = "",
   initialYear = "",
   initialAvatar = "",
+  initialAvatarPreview = "",
   initialPreferences,
 }: {
   userId: string;
@@ -20,12 +21,15 @@ export function StudentProfileForm({
   initialProgram?: string;
   initialYear?: string;
   initialAvatar?: string;
+  initialAvatarPreview?: string;
   initialPreferences?: { event_reminders?: boolean; important_announcements?: boolean };
 }) {
   const [name, setName] = useState(initialName);
   const [program, setProgram] = useState(initialProgram);
   const [year, setYear] = useState(initialYear);
-  const [avatar, setAvatar] = useState(initialAvatar);
+  const [avatarReference, setAvatarReference] = useState(initialAvatar);
+  const [avatarPreview, setAvatarPreview] = useState(initialAvatarPreview || initialAvatar);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [reminders, setReminders] = useState(initialPreferences?.event_reminders ?? true);
   const [announcements, setAnnouncements] = useState(
     initialPreferences?.important_announcements ?? true,
@@ -47,8 +51,9 @@ export function StudentProfileForm({
       setNotice("La photo doit faire 5 Mo maximum.");
       return;
     }
+    setSelectedPhoto(file);
     const reader = new FileReader();
-    reader.onload = () => setAvatar(String(reader.result ?? ""));
+    reader.onload = () => setAvatarPreview(String(reader.result ?? ""));
     reader.readAsDataURL(file);
   }
 
@@ -65,17 +70,21 @@ export function StudentProfileForm({
       return;
     }
 
-    let avatarUrl = avatar;
-    if (avatar.startsWith("data:")) {
-      const uploaded = await persistAnnouncementImage(supabase, avatar);
+    let avatarUrl = avatarReference;
+    let uploadedAvatarPath: string | null = null;
+    let uploadedAvatarPreview = "";
+    if (selectedPhoto) {
+      const uploaded = await uploadStudentAvatar(supabase, userId, selectedPhoto);
       if (!uploaded.ok) {
         setBusy(false);
         setError(true);
-        setNotice(uploaded.error);
+        console.error("Échec de l’envoi de la photo de profil :", uploaded.error);
+        setNotice("Envoi de la photo refusé. Vérifie que le stockage des photos de profil est configuré.");
         return;
       }
-      avatarUrl = uploaded.url;
-      setAvatar(avatarUrl);
+      avatarUrl = uploaded.path;
+      uploadedAvatarPath = uploaded.path;
+      uploadedAvatarPreview = uploaded.signedUrl;
     }
 
     const { error: saveError } = await supabase
@@ -93,25 +102,47 @@ export function StudentProfileForm({
       })
       .eq("id", userId);
 
+    if (saveError) {
+      if (uploadedAvatarPath) {
+        const { error: cleanupError } = await supabase.storage
+          .from(STUDENT_AVATAR_BUCKET)
+          .remove([uploadedAvatarPath]);
+        if (cleanupError) console.error("Impossible de nettoyer la photo non enregistrée :", cleanupError.message);
+      }
+      setBusy(false);
+      setError(true);
+      setNotice("Le profil n’a pas pu être enregistré. Vérifie que setup_platform_features.sql a été exécuté.");
+      return;
+    }
+
+    const previousAvatarPath = avatarReference.startsWith(userId + "/") ? avatarReference : null;
+    if (previousAvatarPath && uploadedAvatarPath && previousAvatarPath !== uploadedAvatarPath) {
+      const { error: cleanupError } = await supabase.storage
+        .from(STUDENT_AVATAR_BUCKET)
+        .remove([previousAvatarPath]);
+      if (cleanupError) console.error("Impossible de nettoyer l’ancienne photo :", cleanupError.message);
+    }
+
+    if (uploadedAvatarPath) {
+      setAvatarReference(uploadedAvatarPath);
+      setAvatarPreview(uploadedAvatarPreview);
+      setSelectedPhoto(null);
+    }
     setBusy(false);
-    setError(Boolean(saveError));
-    setNotice(
-      saveError
-        ? "Le profil n’a pas pu être enregistré. Vérifie que setup_platform_features.sql a été exécuté."
-        : "Profil enregistré.",
-    );
+    setError(false);
+    setNotice("Profil enregistré.");
   }
 
   return (
     <form onSubmit={submit} className="max-w-2xl space-y-5 rounded-2xl border border-border bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-center gap-4">
         <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow">
-          {avatar ? (
+          {avatarPreview ? (
             <Image
-              src={avatar}
+              src={avatarPreview}
               alt="Photo de profil"
               fill
-              unoptimized={avatar.startsWith("data:")}
+              unoptimized={avatarPreview.startsWith("data:")}
               className="object-cover"
               sizes="80px"
             />

@@ -14,7 +14,10 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: false,
     remotePatterns: supabaseHostname
-      ? [{ protocol: "https", hostname: supabaseHostname, pathname: "/storage/v1/object/public/**" }]
+      ? [
+          { protocol: "https", hostname: supabaseHostname, pathname: "/storage/v1/object/public/**" },
+          { protocol: "https", hostname: supabaseHostname, pathname: "/storage/v1/object/sign/**" },
+        ]
       : [],
   },
 };

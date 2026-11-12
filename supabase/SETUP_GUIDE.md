@@ -111,6 +111,8 @@ Ensuite : Admin → Codes admin → générer un code → la personne s’inscri
 ## Profil, tickets, notifications, audit
 Exécuter `setup_platform_features.sql`.
 
+Pour les photos de profil, exécuter `setup_student_avatars.sql` après `setup_news_security.sql` et `setup_student_access.sql`. Ce script crée le bucket privé `istin-student-avatars` : chaque étudiant peut lire, envoyer et supprimer uniquement les fichiers de son propre dossier. Le bucket `istin-news` reste réservé aux images éditoriales et à l’administration.
+
 Pour les notifications complètes, exécuter ensuite dans cet ordre :
 
 1. `setup_notifications_phase1.sql`

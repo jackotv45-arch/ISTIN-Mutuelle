@@ -9,6 +9,7 @@ import { NotificationsPanel } from "@/components/student/NotificationsPanel";
 import { EnablePushToggle } from "@/components/student/EnablePushToggle";
 import { NotificationBell } from "@/components/student/NotificationBell";
 import { StudentTicketForm } from "@/components/student/StudentTicketForm";
+import { STUDENT_AVATAR_BUCKET, STUDENT_AVATAR_URL_TTL_SECONDS } from "@/lib/supabase/avatars";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -98,6 +99,14 @@ export default async function EspaceSectionPage({
           .eq("id", user!.id)
           .maybeSingle()
       : { data: null };
+  const storedAvatar = (profile as { avatar_url?: string | null } | null)?.avatar_url ?? "";
+  let avatarPreview = storedAvatar;
+  if (storedAvatar.startsWith(user!.id + "/")) {
+    const { data: signedAvatar } = await supabase!.storage
+      .from(STUDENT_AVATAR_BUCKET)
+      .createSignedUrl(storedAvatar, STUDENT_AVATAR_URL_TTL_SECONDS);
+    avatarPreview = signedAvatar?.signedUrl ?? "";
+  }
 
   return (
     <>
@@ -125,7 +134,8 @@ export default async function EspaceSectionPage({
               initialName={profile?.full_name ?? ""}
               initialProgram={(profile as { program?: string } | null)?.program ?? ""}
               initialYear={(profile as { study_year?: string } | null)?.study_year ?? ""}
-              initialAvatar={(profile as { avatar_url?: string } | null)?.avatar_url ?? ""}
+              initialAvatar={storedAvatar}
+              initialAvatarPreview={avatarPreview}
               initialPreferences={
                 (profile?.notification_prefs ?? {}) as {
                   event_reminders?: boolean;
