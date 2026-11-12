@@ -111,7 +111,19 @@ export function StudentProfileForm({
       }
       setBusy(false);
       setError(true);
-      setNotice("Le profil n’a pas pu être enregistré. Vérifie que setup_platform_features.sql a été exécuté.");
+      console.error("Échec de la mise à jour du profil Supabase :", {
+        code: saveError.code,
+        message: saveError.message,
+        details: saveError.details,
+        hint: saveError.hint,
+      });
+      const errorCode = saveError.code ? " " + saveError.code : "";
+      setNotice(
+        "Le profil n’a pas pu être enregistré. Erreur Supabase" +
+          errorCode +
+          " : " +
+          saveError.message.slice(0, 220),
+      );
       return;
     }
 
